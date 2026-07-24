@@ -48,7 +48,7 @@ and the server re-verifies against the forge
 
 ## Status: implemented
 
-Lockfile with sha256 + commit pinning, `--frozen`, registry immutability, and
-two-sided tag verification all exist today. Planned: Sigstore/cosign
-signatures over the manifest + tarball, and a `zed audit` that re-checks every
-locked artifact's sha256 and tag→commit binding.
+Lockfile with sha256 + commit pinning, `--frozen`, registry immutability,
+non-destructive yanking, and two-sided tag verification all exist today.
+Planned: Sigstore/cosign signatures over the manifest + tarball, and a `zed
+audit` that re-checks every locked artifact's sha256 and tag→commit binding.
