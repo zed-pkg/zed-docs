@@ -20,6 +20,16 @@ time.** They pull an immutable, content-addressed artifact:
   ([`Lockfile`/`LockedPackage`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/lockfile.rs).)
 - `zed install --frozen` installs **exactly** the locked sha256s and fails on
   any drift between manifest and lock — the mode CI and containers use.
+- **Yanking** is the one sanctioned version-level control, and it is
+  non-destructive: `zed yank org/name@version` marks a published version
+  hidden from *fresh* resolution — cargo-style, the resolver falls through to
+  the next-best match and errors only when every version satisfying the
+  requirement is yanked — while the bytes stay downloadable so existing
+  `.zpkg.lock` pins keep installing. It never rewrites or deletes an artifact,
+  so it can't break a locked build. See the registry
+  [`yank` route](https://github.com/zed-pkg/zed-api-server.rs/blob/main/src/routes/yank.rs),
+  the `zed yank` CLI, and the resolver's yanked-version skip
+  ([`install`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)).
 
 So switching git branches in your *own* repo changes `.zpkg.toml` /
 `.zpkg.lock`, and `--frozen` makes the resulting install fully determined by
