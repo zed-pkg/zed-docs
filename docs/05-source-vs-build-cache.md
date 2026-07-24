@@ -15,13 +15,17 @@ zed-pkg deliberately separates them:
    It never contains compiled output, so it is safe to share across machines,
    architectures, and OCI base images.
 
-2. **Build cache (design).** Compiled output is keyed by
-   `(source sha256, target triple, toolchain version, build inputs)` and
-   stored separately, e.g.
-   `~/.zed-pkg/build/<target>/<sha>/`. A cache miss triggers a build; a hit
-   reuses it. Because the key includes the target triple, `linux-x64` and
-   `darwin-arm64` artifacts never collide, and a CI container and a laptop
-   maintain independent build caches over the *same* source store.
+2. **Build cache (implemented).** A package's optional `[build]` step
+   (a `command` plus the `outputs` to keep) runs after extraction, and its
+   compiled output is keyed by `(source sha256, platform)` — where `platform`
+   is the `os-arch` pair from
+   [`current_platform`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/paths.rs)
+   — and stored separately at `~/.zed-pkg/builds/v1/<platform>/<sha>/pkg`
+   ([`build_entry_rel`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/paths.rs)).
+   A cache miss triggers a build; a hit reuses it. Because the key includes
+   the platform, `linux-x86_64` and `macos-aarch64` results never collide, and
+   a CI container and a laptop maintain independent build caches over the
+   *same* source store.
 
 ## Why keep them separate
 
