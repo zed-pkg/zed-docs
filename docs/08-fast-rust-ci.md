@@ -39,5 +39,7 @@ every PR a 15-minute wait and destroys velocity. Keep CI under ~3 minutes.
 ## Status: implemented (baseline) + documented (advanced)
 
 The caching + parallel-jobs + hermetic-tests baseline is in every repo's
-`.github/workflows/ci.yml`. `sccache`/`cargo-chef`/`nextest` are recommended
-next steps, not yet wired, to keep the default CI dependency-light.
+`.github/workflows/ci.yml`. `mold` (Linux) and `cargo nextest` are now wired
+into `zed-cli`'s CI and are being rolled out to the server repos (still on
+plain `cargo test`). `sccache`/`cargo-chef` remain documented-only next steps,
+kept out of the default CI to stay dependency-light.
