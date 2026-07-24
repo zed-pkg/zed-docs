@@ -44,7 +44,7 @@ The `zed` binary is released for a full target matrix on every `v*` tag via
 
 ## Status: implemented
 
-The release matrix, `cross` setup, musl static builds, and archived
-per-target uploads exist today. Planned: publishing the Homebrew formula to a
-`zed-pkg/homebrew-tap` tap automatically on release, plus Scoop (Windows) and
-a `curl | sh` installer that detects OS/arch.
+The release matrix, `cross` setup, musl static builds, archived per-target
+uploads, the OS/arch-detecting `curl | bash` installer, and in-place `zed
+self-update` all exist today. Planned: publishing the Homebrew formula to a
+`zed-pkg/homebrew-tap` tap automatically on release, and Scoop (Windows).
