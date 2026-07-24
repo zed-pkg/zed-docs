@@ -25,6 +25,16 @@ The `zed` binary is released for a full target matrix on every `v*` tag via
 
 ## Install channels
 
+- **`curl | bash`:** `curl -fsSL https://zpkg.tech/install.sh | bash`
+  ([`install.sh`](https://github.com/zed-pkg/zed-cli/blob/main/install.sh))
+  detects OS/arch (Linux musl + macOS, `x86_64`/`aarch64`), reads the latest
+  tag from the `/releases/latest` redirect (no API token, no rate limit),
+  downloads the matching `zed-<target>.tar.gz`, installs into `~/.zed/bin`, and
+  adds it to `PATH` idempotently. `ZED_VERSION` pins a specific release tag.
+- **Self-update:** `zed self-update` fetches the latest release for the
+  running platform and atomically replaces the binary in place — refusing
+  downgrades; `--check` reports without replacing
+  ([`self_update`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)).
 - **Homebrew:** [`Formula/zed-pkg.rb`](https://github.com/zed-pkg/zed-cli/blob/main/Formula/zed-pkg.rb)
   (`brew tap zed-pkg/tap && brew install zed-pkg`). Note the documented
   conflict with the Zed editor's `zed` binary.
@@ -34,7 +44,7 @@ The `zed` binary is released for a full target matrix on every `v*` tag via
 
 ## Status: implemented
 
-The release matrix, `cross` setup, musl static builds, and archived
-per-target uploads exist today. Planned: publishing the Homebrew formula to a
-`zed-pkg/homebrew-tap` tap automatically on release, plus Scoop (Windows) and
-a `curl | sh` installer that detects OS/arch.
+The release matrix, `cross` setup, musl static builds, archived per-target
+uploads, the OS/arch-detecting `curl | bash` installer, and in-place `zed
+self-update` all exist today. Planned: publishing the Homebrew formula to a
+`zed-pkg/homebrew-tap` tap automatically on release, and Scoop (Windows).

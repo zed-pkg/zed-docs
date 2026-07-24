@@ -18,6 +18,13 @@ every PR a 15-minute wait and destroys velocity. Keep CI under ~3 minutes.
   `cargo build`, not test setup.
 - **`fmt --check` as a separate fast gate** fails style issues in seconds
   without waiting on the full build.
+- **Faster linking and test running.** `zed-cli`'s CI links with
+  [`mold`](https://github.com/rui314/mold) on Linux — wired in as the default
+  system linker via `rui314/setup-mold`, so `cargo`/`rustc` use it with no
+  extra `RUSTFLAGS` — and runs tests with
+  [`cargo nextest`](https://nexte.st) for parallel execution and cleaner
+  output, keeping `cargo test --doc` alongside since nextest doesn't run
+  doctests.
 
 ## Recommended additions (documented, opt-in)
 
@@ -25,7 +32,6 @@ every PR a 15-minute wait and destroys velocity. Keep CI under ~3 minutes.
 - **`cargo-chef`** in Dockerfiles to cache the dependency-build layer so image
   builds only recompile app code (pairs with the parent-context build the
   Rust services already use).
-- **`cargo nextest`** for faster parallel test execution and better output.
 - **`-Zshare-generics` / thin LTO off in dev**, `debug = 0` for test profiles,
   and splitting the workspace so unrelated crates don't serialize.
 - Pinning the toolchain via `rust-toolchain.toml` so the cache key is stable.
@@ -33,5 +39,7 @@ every PR a 15-minute wait and destroys velocity. Keep CI under ~3 minutes.
 ## Status: implemented (baseline) + documented (advanced)
 
 The caching + parallel-jobs + hermetic-tests baseline is in every repo's
-`.github/workflows/ci.yml`. `sccache`/`cargo-chef`/`nextest` are recommended
-next steps, not yet wired, to keep the default CI dependency-light.
+`.github/workflows/ci.yml`. `mold` (Linux) and `cargo nextest` are now wired
+into `zed-cli`'s CI and are being rolled out to the server repos (still on
+plain `cargo test`). `sccache`/`cargo-chef` remain documented-only next steps,
+kept out of the default CI to stay dependency-light.
