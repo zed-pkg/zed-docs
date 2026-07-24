@@ -37,9 +37,13 @@ onto every consumer and the resolver. Normalizing to semver at publish time
 (and validating it there — the API server rejects non-semver) keeps
 resolution total and deterministic across languages.
 
-## Status: partial
+## Status: implemented
 
-Implemented: semver validation, configurable `tag_format`, max-satisfying
-resolution, commit recording. Planned: an optional `version_scheme` field for
-calendar/opaque versions with a documented total order, and per-ecosystem
-tag-normalization presets (strip `v`, PEP 440 → semver, Go `+incompatible`).
+Semver validation, configurable `tag_format`, max-satisfying resolution, and
+commit recording all exist. The `version_scheme` field (semver/calver/opaque)
+with a documented total order for calendar versions
+([`normalize_calver`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/version.rs))
+is implemented and enforced at manifest-parse time, as are the per-ecosystem
+tag-normalization edges (strip `v`, Go `+incompatible`, and a PEP 440 subset →
+semver, in `parse_version`). Planned: broadening the PEP 440 coverage and
+exposing scheme presets as a publish-time lint.
