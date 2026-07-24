@@ -18,6 +18,13 @@ every PR a 15-minute wait and destroys velocity. Keep CI under ~3 minutes.
   `cargo build`, not test setup.
 - **`fmt --check` as a separate fast gate** fails style issues in seconds
   without waiting on the full build.
+- **Faster linking and test running.** `zed-cli`'s CI links with
+  [`mold`](https://github.com/rui314/mold) on Linux — wired in as the default
+  system linker via `rui314/setup-mold`, so `cargo`/`rustc` use it with no
+  extra `RUSTFLAGS` — and runs tests with
+  [`cargo nextest`](https://nexte.st) for parallel execution and cleaner
+  output, keeping `cargo test --doc` alongside since nextest doesn't run
+  doctests.
 
 ## Recommended additions (documented, opt-in)
 
