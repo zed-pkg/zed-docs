@@ -51,8 +51,15 @@ the `zed run` prefix.
 - **Planned:** RBAC/teams per org, audit logs, SSO, mirror/proxy of the public
   registry, and per-org storage quotas (tie-in with pricing).
 
-## Monorepo ergonomics (planned)
+## Monorepo ergonomics (implemented)
 
-A workspace mode (`zed install` at the repo root resolving many
-`.zpkg.toml` members against one lock and one store) is the main missing piece
-for large monorepos and is next after workspaces land in the resolver.
+A workspace root manifest declares member globs in `[workspace]`
+(`members = ["packages/*", "apps/*"]`). `zed install` walks up to find the
+enclosing workspace and expands the globs
+([`find_workspace`/`collect_members`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)),
+then resolves any dependency that matches a member by symlinking straight to
+the member's **source** directory instead of going through the registry — so
+an edit in one member is visible to its consumers immediately, while
+non-member deps still resolve normally against the shared store and lock.
+Planned: a single top-level lock spanning every member (today each member
+install writes its own `.zpkg.lock`) and workspace-wide `zed run`.
