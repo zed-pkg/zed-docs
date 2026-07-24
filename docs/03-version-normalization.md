@@ -29,9 +29,18 @@ onto every consumer and the resolver. Normalizing to semver at publish time
 (and validating it there — the API server rejects non-semver) keeps
 resolution total and deterministic across languages.
 
-## Status: partial
+## Status: implemented
 
-Implemented: semver validation, configurable `tag_format`, max-satisfying
-resolution, commit recording. Planned: an optional `version_scheme` field for
-calendar/opaque versions with a documented total order, and per-ecosystem
-tag-normalization presets (strip `v`, PEP 440 → semver, Go `+incompatible`).
+- Semver validation, configurable `tag_format`, max-satisfying resolution, and
+  commit recording — done.
+- An optional `package.version_scheme` (`semver` | `calver` | `opaque`) now
+  validates `package.version` the right way and drives resolution: calendar
+  versions normalize to a semver total order (`2026.07.24` → `2026.7.24`);
+  opaque tags resolve only by exact match. See
+  [`zed-interfaces/src/version.rs`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/version.rs).
+- Per-ecosystem tag normalization is applied during resolution: a bare leading
+  `v`, Go's `+incompatible`, and a subset of PEP 440 (`1.2.3rc1` → `1.2.3-rc.1`)
+  are all understood, so foreign tag spellings sort into one order.
+- The scheme is carried through `PackageMetadata` and persisted server-side
+  (api-server `package.version_scheme` column). Unit tests cover calendar
+  ordering, opaque exact-match, and the normalization cases.

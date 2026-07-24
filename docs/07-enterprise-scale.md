@@ -9,9 +9,12 @@ Four capabilities, and where each stands:
 
 One content-addressed store per machine ([1](01-cas-and-symlinks.md)); every
 project symlinks in. 50 developers × N projects with heavy overlap store each
-dependency **once** per machine. `zed store status` reports usage;
-`zed store prune` garbage-collects artifacts no live project references
-(tracked in `refs.json`); `zed cache clean` drops downloads.
+dependency **once** per machine. `zed store status` reports usage (store,
+download cache, and build cache); `zed store prune` garbage-collects artifacts
+no live project references (tracked in `refs.json`); `zed cache clean` drops
+downloads; and `zed gc [--older-than 90d] [--dry-run]` is a least-recently-used
+sweep over the store, build cache, and downloads by access time — everything it
+removes is content-addressed and re-fetchable.
 
 ## 2. Deterministic, concurrent installs (implemented)
 
@@ -20,28 +23,39 @@ dependency **once** per machine. `zed store status` reports usage;
 runners and multiple terminals safe ([6](06-process-locking.md)). Same lock →
 same bytes on every machine.
 
-## 3. Executing binaries (design)
+## 3. Executing binaries (implemented)
 
-Packages may expose executables; `zed run <org>/<name> [args]` and a shimmed
-`~/.zed-pkg/bin` on `PATH` (resolving to the locked version per project) are
-specified and planned. Today, adapter-linked layouts
-([2](02-store-project-bridge-oci.md)) let native runners find dependency
-binaries.
+Packages expose executables via `[bin]` (`name = "path"`). On install, zed
+hoists each into `zed_modules/.bin/` (a real file in copy mode, a symlink in
+symlink mode, so it works in containers too), and `zed run <name> [args]`
+executes it with `zed_modules/.bin` prepended to `PATH` — the project's tools
+resolve to the versions it installed, without polluting the global `PATH`.
+See `hoist_bins`/`run` in
+[`zed-cli/src/ops.rs`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs).
 
-## 4. Governance (partial → planned)
+## 4. Governance (implemented core; SSO/audit/quotas planned)
 
-- **Namespaces:** orgs are claimed and tokens are org-scoped today
-  ([`zed org claim`](https://github.com/zed-pkg/zed-cli),
-  [api-server orgs](https://github.com/zed-pkg/zed-api-server.rs)).
+- **Namespaces & RBAC:** orgs are claimed and tokens are org-scoped
+  ([`zed org claim`](https://github.com/zed-pkg/zed-cli)); each token carries a
+  **role** — `owner`, `publisher`, or `reader` — set with
+  `create-token --org <slug> --role <role>`. Publishing enforces it: a
+  `reader` token gets `403 insufficient_role`, a token for another org is
+  rejected, and unscoped admin tokens publish anywhere (npm-style granular
+  tokens). See
+  [`api-server/src/rbac.rs`](https://github.com/zed-pkg/zed-api-server.rs).
 - **Self-hosting:** the whole registry is two small Rust services + Postgres +
   any S3 bucket, so a company runs a private registry behind its firewall
   ([zed-infra](https://github.com/zed-pkg/zed-infra)); `ZED_PKG_REGISTRY`
   (or a `file://` mirror) repoints the CLI.
-- **Planned:** RBAC/teams per org, audit logs, SSO, mirror/proxy of the public
-  registry, and per-org storage quotas (tie-in with pricing).
+- **Planned:** multi-user teams with per-member roles, audit logs, SSO,
+  mirror/proxy of the public registry, and per-org storage quotas.
 
-## Monorepo ergonomics (planned)
+## Monorepo ergonomics (implemented)
 
-A workspace mode (`zed install` at the repo root resolving many
-`.zpkg.toml` members against one lock and one store) is the main missing piece
-for large monorepos and is next after workspaces land in the resolver.
+Workspace mode: a root `.zpkg.toml` with `[workspace] members = ["packages/*",
+"apps/*"]` makes `zed install` resolve every member against one store and write
+one `.zpkg.lock`. Member→member dependencies link by **path** to the member's
+source (live editing, no publish), while external deps resolve from the shared
+store; zed's "one version per package" rule holds workspace-wide. See
+`install_workspace` in
+[`zed-cli/src/ops.rs`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs).

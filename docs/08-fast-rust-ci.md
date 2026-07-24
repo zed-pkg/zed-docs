@@ -30,8 +30,13 @@ every PR a 15-minute wait and destroys velocity. Keep CI under ~3 minutes.
   and splitting the workspace so unrelated crates don't serialize.
 - Pinning the toolchain via `rust-toolchain.toml` so the cache key is stable.
 
-## Status: implemented (baseline) + documented (advanced)
+## Status: implemented
 
-The caching + parallel-jobs + hermetic-tests baseline is in every repo's
-`.github/workflows/ci.yml`. `sccache`/`cargo-chef`/`nextest` are recommended
-next steps, not yet wired, to keep the default CI dependency-light.
+Every Rust repo's `.github/workflows/ci.yml` now runs `Swatinem/rust-cache` +
+`sccache` (GitHub Actions cache backend) for cross-run compile caching, `mold`
+as the linker on Linux, and `cargo-nextest` for parallel tests (with a separate
+`cargo test --doc` step, since nextest skips doctests). The toolchain is pinned
+via a `rust-toolchain.toml` in each repo so the cache key stays stable.
+`cargo-chef` in the service Dockerfiles (to cache the dependency-build image
+layer) remains the one recommended-but-optional item, kept out by default so a
+plain `docker build` needs no extra tooling.
