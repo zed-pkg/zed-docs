@@ -36,7 +36,7 @@ zed-pkg deliberately separates them:
 - Build outputs are inherently non-portable; mixing them into the source
   store would break cross-machine sharing and bloat images.
 - It maps cleanly onto multi-stage Docker: restore the build cache with
-  `--mount=type=cache,target=/root/.zed-pkg/build/<target>`, install with
+  `--mount=type=cache,target=/root/.zed-pkg/builds/v1/<platform>`, install with
   copy-mode source ([2](02-store-project-bridge-oci.md)).
 
 ## Status: design
