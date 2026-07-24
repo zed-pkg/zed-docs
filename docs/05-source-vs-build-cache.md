@@ -15,13 +15,17 @@ zed-pkg deliberately separates them:
    It never contains compiled output, so it is safe to share across machines,
    architectures, and OCI base images.
 
-2. **Build cache (design).** Compiled output is keyed by
-   `(source sha256, target triple, toolchain version, build inputs)` and
-   stored separately, e.g.
-   `~/.zed-pkg/build/<target>/<sha>/`. A cache miss triggers a build; a hit
-   reuses it. Because the key includes the target triple, `linux-x64` and
-   `darwin-arm64` artifacts never collide, and a CI container and a laptop
-   maintain independent build caches over the *same* source store.
+2. **Build cache (implemented).** A package's optional `[build]` step
+   (a `command` plus the `outputs` to keep) runs after extraction, and its
+   compiled output is keyed by `(source sha256, platform)` — where `platform`
+   is the `os-arch` pair from
+   [`current_platform`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/paths.rs)
+   — and stored separately at `~/.zed-pkg/builds/v1/<platform>/<sha>/pkg`
+   ([`build_entry_rel`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/paths.rs)).
+   A cache miss triggers a build; a hit reuses it. Because the key includes
+   the platform, `linux-x86_64` and `macos-aarch64` results never collide, and
+   a CI container and a laptop maintain independent build caches over the
+   *same* source store.
 
 ## Why keep them separate
 
@@ -32,23 +36,29 @@ zed-pkg deliberately separates them:
 - Build outputs are inherently non-portable; mixing them into the source
   store would break cross-machine sharing and bloat images.
 - It maps cleanly onto multi-stage Docker: restore the build cache with
-  `--mount=type=cache,target=/root/.zed-pkg/build/<target>`, install with
+  `--mount=type=cache,target=/root/.zed-pkg/builds/v1/<platform>`, install with
   copy-mode source ([2](02-store-project-bridge-oci.md)).
 
 ## Status: implemented
 
-- The source store is content-addressed and platform-independent, as before.
-- The build cache is implemented and keyed by `(target triple, source sha256,
-  build command)` under `~/.zed-pkg/build/<target>/`, kept separate from the
-  source store. A package declares a `[build]` step (`command` + optional
-  `outputs`); on install, zed copies the source into a sandbox, runs the
-  command there, and promotes the result into the build cache — never mutating
-  the immutable source store. See
-  [`zed-cli/src/build.rs`](https://github.com/zed-pkg/zed-cli/blob/main/src/build.rs).
-- `[build-dependencies]` are linked into the sandbox for the build and dropped
-  before promotion; a consumer can patch a dependency's build with
-  `[build-overrides."org/name"]`.
-- `zed build [--target <triple>] [--force]` warms the cache (e.g. for a
-  cross-target) explicitly; a normal `zed install` builds on demand.
-- Tests assert the build runs once and the second install is a cache hit, and
-  that a consumer override replaces the upstream build.
+Both caches exist. The source store is content-addressed and
+platform-independent, as before. `zed install --allow-build` (or a standalone
+`zed build [--force]`) runs a dependency's `[build]` step inside an isolated
+staging copy of its source
+([`build_artifact`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)),
+installs its `[build-dependencies]` into that staging dir only (never into the
+consumer's `zed_modules/`), then promotes the result into the build cache via
+a temp dir and atomic rename. The cache is keyed by `(platform, source sha256,
+build command)` under `~/.zed-pkg/builds/` — folding in the command means a
+consumer override never collides with the package's own build — and the
+immutable source store is never mutated. A per-`(platform, key)` lock
+([`Store::build_lock`](https://github.com/zed-pkg/zed-cli/blob/main/src/store.rs))
+serializes concurrent builds of the same artifact.
+
+Builds run arbitrary package-author code, so they are opt-in behind
+`--allow-build` (`ZED_PKG_ALLOW_BUILD=1`); without it the pristine source is
+linked and a warning explains how to enable it. A consumer can replace or
+supply a broken dependency's build with `[overrides.build."org/name"]`. Tests
+assert the build runs once (the second install is a cache hit) and that a
+consumer override replaces the upstream build. Planned: folding the toolchain
+version and declared build inputs into the cache key.

@@ -12,9 +12,13 @@ project symlinks in. 50 developers × N projects with heavy overlap store each
 dependency **once** per machine. `zed store status` reports usage (store,
 download cache, and build cache); `zed store prune` garbage-collects artifacts
 no live project references (tracked in `refs.json`); `zed cache clean` drops
-downloads; and `zed gc [--older-than 90d] [--dry-run]` is a least-recently-used
-sweep over the store, build cache, and downloads by access time — everything it
-removes is content-addressed and re-fetchable.
+downloads; and `zed gc [--older-than 90d] [--dry-run]` is an age-aware LRU
+sweep that removes store entries that are *both* unreferenced by a live
+project *and* unused past the cutoff — tracked with a `.last-used` marker
+alongside the immutable `pkg/` tree — plus stale build-cache entries and
+download caches
+([`Store::gc`](https://github.com/zed-pkg/zed-cli/blob/main/src/store.rs)).
+Everything it removes is content-addressed and re-fetchable.
 
 ## 2. Deterministic, concurrent installs (implemented)
 
@@ -25,13 +29,17 @@ same bytes on every machine.
 
 ## 3. Executing binaries (implemented)
 
-Packages expose executables via `[bin]` (`name = "path"`). On install, zed
-hoists each into `zed_modules/.bin/` (a real file in copy mode, a symlink in
-symlink mode, so it works in containers too), and `zed run <name> [args]`
-executes it with `zed_modules/.bin` prepended to `PATH` — the project's tools
-resolve to the versions it installed, without polluting the global `PATH`.
-See `hoist_bins`/`run` in
-[`zed-cli/src/ops.rs`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs).
+Packages declare executables in a `[bin]` table (command name → a path inside
+the package). On install, each is hoisted into the project's
+`zed_modules/.bin/<name>`
+([`hoist_bins`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)) — a
+relative symlink in symlink mode, a real file in copy mode, so it works inside
+container layers too — and `zed run <name> [args]` executes it with that
+directory prepended to `PATH` — npx-style, scoped to the project's resolved
+versions and without polluting the OS `PATH`. Adapter-linked layouts
+([2](02-store-project-bridge-oci.md)) additionally let native runners find
+dependency binaries where they expect them. Planned: an opt-in global shim on
+`PATH` so top-level tools run without the `zed run` prefix.
 
 ## 4. Governance (implemented core; SSO/audit/quotas planned)
 
@@ -52,10 +60,14 @@ See `hoist_bins`/`run` in
 
 ## Monorepo ergonomics (implemented)
 
-Workspace mode: a root `.zpkg.toml` with `[workspace] members = ["packages/*",
-"apps/*"]` makes `zed install` resolve every member against one store and write
-one `.zpkg.lock`. Member→member dependencies link by **path** to the member's
-source (live editing, no publish), while external deps resolve from the shared
-store; zed's "one version per package" rule holds workspace-wide. See
-`install_workspace` in
-[`zed-cli/src/ops.rs`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs).
+Workspace mode: a root `.zpkg.toml` declares member globs in `[workspace]`
+(`members = ["packages/*", "apps/*"]`). `zed install` walks up to find the
+enclosing workspace and expands the globs
+([`find_workspace`/`collect_members`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)),
+then resolves any dependency that matches a member by symlinking straight to
+the member's **source** directory instead of going through the registry — so
+an edit in one member is visible to its consumers immediately, while
+non-member deps still resolve normally against the shared store and lock, and
+zed's "one version per package" rule holds workspace-wide. Planned: a single
+top-level lock spanning every member (today each member install writes its
+own `.zpkg.lock`) and workspace-wide `zed run`.

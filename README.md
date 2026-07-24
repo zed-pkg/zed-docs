@@ -17,6 +17,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [7](docs/07-enterprise-scale.md) | From concept to enterprise-grade | implemented* |
 | [8](docs/08-fast-rust-ci.md) | Fast Rust CI (<3 min) | implemented |
 | [9](docs/09-cross-platform-distribution.md) | Multi-OS / multi-arch CLI distribution | implemented |
+| [10](docs/10-e2e-testing.md) | End-to-end testing across servers, CLI, and browsers | implemented |
 
 <sub>\* Enterprise features are implemented except SSO, audit logs, and per-org
 storage quotas, which remain planned (see [doc 7](docs/07-enterprise-scale.md)).</sub>
