@@ -25,13 +25,19 @@ alongside the immutable `pkg/` tree — plus stale download caches
 runners and multiple terminals safe ([6](06-process-locking.md)). Same lock →
 same bytes on every machine.
 
-## 3. Executing binaries (design)
+## 3. Executing binaries (implemented)
 
-Packages may expose executables; `zed run <org>/<name> [args]` and a shimmed
-`~/.zed-pkg/bin` on `PATH` (resolving to the locked version per project) are
-specified and planned. Today, adapter-linked layouts
-([2](02-store-project-bridge-oci.md)) let native runners find dependency
-binaries.
+Packages declare executables in a `[bin]` table (command name → a path inside
+the package). On install, each is hoisted into the project's
+`zed_modules/.bin/<name>` as a relative symlink
+([`hoist_bins`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)), and
+`zed run <bin> [args]` executes one with that directory prepended to `PATH`
+([`run_bin`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)) —
+npx-style, scoped to the project's resolved versions and without polluting the
+OS `PATH`. Adapter-linked layouts ([2](02-store-project-bridge-oci.md))
+additionally let native runners find dependency binaries where they expect
+them. Planned: an opt-in global shim on `PATH` so top-level tools run without
+the `zed run` prefix.
 
 ## 4. Governance (partial → planned)
 
