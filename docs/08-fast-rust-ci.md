@@ -32,7 +32,6 @@ every PR a 15-minute wait and destroys velocity. Keep CI under ~3 minutes.
 - **`cargo-chef`** in Dockerfiles to cache the dependency-build layer so image
   builds only recompile app code (pairs with the parent-context build the
   Rust services already use).
-- **`cargo nextest`** for faster parallel test execution and better output.
 - **`-Zshare-generics` / thin LTO off in dev**, `debug = 0` for test profiles,
   and splitting the workspace so unrelated crates don't serialize.
 - Pinning the toolchain via `rust-toolchain.toml` so the cache key is stable.
