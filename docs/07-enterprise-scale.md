@@ -11,7 +11,12 @@ One content-addressed store per machine ([1](01-cas-and-symlinks.md)); every
 project symlinks in. 50 developers × N projects with heavy overlap store each
 dependency **once** per machine. `zed store status` reports usage;
 `zed store prune` garbage-collects artifacts no live project references
-(tracked in `refs.json`); `zed cache clean` drops downloads.
+(tracked in `refs.json`); `zed gc [--max-age-days N]` adds an age-aware LRU
+sweep that removes store entries that are *both* unreferenced by a live
+project *and* unused past the cutoff — tracked with a `.last-used` marker
+alongside the immutable `pkg/` tree — plus stale download caches
+([`Store::gc`](https://github.com/zed-pkg/zed-cli/blob/main/src/store.rs));
+`zed cache clean` drops downloads.
 
 ## 2. Deterministic, concurrent installs (implemented)
 
