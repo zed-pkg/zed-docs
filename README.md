@@ -22,6 +22,8 @@ in order. Where a design is already implemented, the doc links to the code.
 | [12](docs/12-in-cluster-e2e.md) | In-cluster e2e (kind + in-memory profile + Argo CD) | implemented |
 | [13](docs/13-remote-browser-grid-e2e.md) | Remote browser-grid e2e (ORES clusters, AWS + Hetzner) | partial |
 | [14](docs/14-client-sync-and-opto-sync-clients.md) | Client-side sync patterns + opto-sync-clients adoption | direction set |
+| [15](docs/15-manifest-and-dep-locations.md) | The manifest, where deps go, complementing npm/maven | implemented |
+| [16](docs/16-zed-pkg-test-ci.md) | zed-pkg-test CI harness (GitHub Actions only) | node + rust proven |
 
 <sub>\* Enterprise features are implemented except SSO, audit logs, and per-org
 storage quotas, which remain planned (see [doc 7](docs/07-enterprise-scale.md)).</sub>
