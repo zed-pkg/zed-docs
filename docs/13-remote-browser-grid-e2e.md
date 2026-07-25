@@ -111,15 +111,28 @@ page shows the `zed add …` snippet, and the security headers are present.
   single AWS node but **not on the Hetzner nodes**, so the Maven self-build
   never runs. Fix is a platform change (put the repo on the Hetzner nodes, or
   switch these deployments to a prebuilt image) — out of scope for zed.
-- **zed UI through the grid — blocked on making zed reachable.** `/run`
-  navigates from inside the cluster, so it needs a zed UI the grid can reach.
-  The local `kind` zed isn't reachable from AWS/Hetzner, and every
-  low-touch path to change that is currently closed: pushing the `:dev` images
-  to ghcr needs `write:packages` (the token has only `read:packages`); the AWS
-  node's role can't read the `dd-img-xfer` S3 bucket; node SSH `:22` is
-  SG-blocked; and the available tunnel (ngrok) has a suspended account. The
-  remaining route is a privileged in-cluster image-import (mount the containerd
-  socket, `kubectl cp` the image, `ctr -n k8s.io images import`) followed by
-  deploying the in-memory profile to the cluster — deferred as an explicit,
-  reversible operation. The runner (`cluster/remote-grid.sh`) + scenarios are
-  committed and ready to point at the zed UI the moment it is cluster-reachable.
+- **zed UI through the grid — verified end-to-end on AWS.** The in-memory zed
+  stack was deployed into the AWS cluster (namespace `zed-e2e-remote`, ClusterIP)
+  and driven from the grid over ClusterDNS
+  (`http://dd-zed-web-server.zed-e2e-remote.svc.cluster.local:8081`).
+  `dd-browser-test-server` ran the home page, HTMX live search (returned the
+  seeded `acme/logkit`), and the package page (rendered `zed add acme/http-kit`)
+  through **all three** back-ends, and the **dedicated `dd-selenium-server`**
+  rendered the package page too — all `ok:true`, 0 page errors. Teardown removed
+  the namespace and the node artifacts.
+
+  Getting there settled the image-distribution question the hard way, since every
+  low-touch path was closed (ghcr push needs `write:packages`, the node's role
+  can't read the `dd-img-xfer` bucket, SSH `:22` is SG-blocked, ngrok's account is
+  suspended). The route that worked, and is the documented one:
+  1. **Cross-build for the node's arch.** The images must be `linux/amd64` (the
+     AWS node); an arm64 build imports but won't run
+     (`ctr: no match for platform`). `docker buildx build --platform linux/amd64
+     --output type=docker,dest=...`.
+  2. **Transfer over the kube API, import with `ctr`.** `kubectl cp` the gzipped
+     tar into a throwaway pod that hostPath-mounts the node's `/tmp`, then (via
+     SSM Run Command, since SSH is blocked) `zcat … | ctr -n k8s.io images
+     import -`. Deploy with `imagePullPolicy: Never`.
+  3. **Seed** through a `kubectl port-forward` of the api + the local `zed` CLI.
+  The runner (`cluster/remote-grid.sh`) drove the whole thing; keep it pointed at
+  whatever cluster-reachable URL the zed web UI has.
