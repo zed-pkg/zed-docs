@@ -36,10 +36,21 @@ every PR a 15-minute wait and destroys velocity. Keep CI under ~3 minutes.
   and splitting the workspace so unrelated crates don't serialize.
 - Pinning the toolchain via `rust-toolchain.toml` so the cache key is stable.
 
-## Status: implemented (baseline) + documented (advanced)
+## Status: implemented
 
-The caching + parallel-jobs + hermetic-tests baseline is in every repo's
-`.github/workflows/ci.yml`. `mold` (Linux) and `cargo nextest` are now wired
-into `zed-cli`'s CI and are being rolled out to the server repos (still on
-plain `cargo test`). `sccache`/`cargo-chef` remain documented-only next steps,
-kept out of the default CI to stay dependency-light.
+Every Rust repo's `.github/workflows/ci.yml` now runs `Swatinem/rust-cache`
+for cross-run compile caching, `mold` as the linker on Linux, and
+`cargo-nextest` for parallel tests (with a separate `cargo test --doc` step,
+since nextest skips doctests). The toolchain is pinned via a
+`rust-toolchain.toml` in each repo so the cache key stays stable.
+
+`sccache` on the GitHub Actions cache backend was tried and **removed**: the
+Actions cache service has real outages, and sccache treats a dead backend as
+fatal — first at server startup, and (even behind a health probe) again
+mid-build when the service flaps — turning a cache optimization into a
+hard dependency that took the whole org's CI red. `rust-cache` degrades
+gracefully during the same outages, so it stays. sccache remains a good fit
+with a self-hosted backend (S3/R2) if cross-run caching ever needs to go
+deeper. `cargo-chef` in the service Dockerfiles (to cache the
+dependency-build image layer) remains the one recommended-but-optional item,
+kept out by default so a plain `docker build` needs no extra tooling.

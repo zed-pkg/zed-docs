@@ -39,11 +39,18 @@ resolution total and deterministic across languages.
 
 ## Status: implemented
 
-Semver validation, configurable `tag_format`, max-satisfying resolution, and
-commit recording all exist. The `version_scheme` field (semver/calver/opaque)
-with a documented total order for calendar versions
-([`normalize_calver`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/version.rs))
-is implemented and enforced at manifest-parse time, as are the per-ecosystem
-tag-normalization edges (strip `v`, Go `+incompatible`, and a PEP 440 subset →
-semver, in `parse_version`). Planned: broadening the PEP 440 coverage and
-exposing scheme presets as a publish-time lint.
+- Semver validation, configurable `tag_format`, max-satisfying resolution, and
+  commit recording — done.
+- An optional `package.version_scheme` (`semver` | `calver` | `opaque`) now
+  validates `package.version` the right way and drives resolution: calendar
+  versions normalize to a semver total order (`2026.07.24` → `2026.7.24`);
+  opaque tags resolve only by exact match. See
+  [`zed-interfaces/src/version.rs`](https://github.com/zed-pkg/zed-interfaces/blob/main/src/version.rs).
+- Per-ecosystem tag normalization is applied during resolution: a bare leading
+  `v`, Go's `+incompatible`, and a subset of PEP 440 (`1.2.3rc1` → `1.2.3-rc.1`)
+  are all understood, so foreign tag spellings sort into one order.
+- The scheme is carried through `PackageMetadata` and persisted server-side
+  (api-server `package.version_scheme` column). Unit tests cover calendar
+  ordering, opaque exact-match, and the normalization cases.
+- Planned: broadening the PEP 440 coverage and exposing scheme presets as a
+  publish-time lint.

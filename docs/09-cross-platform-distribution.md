@@ -42,9 +42,21 @@ The `zed` binary is released for a full target matrix on every `v*` tag via
 - **Containers:** copy the musl binary into any base image; artifacts are
   pre-pruned so images stay small.
 
+## Self-update
+
+`zed update self` upgrades the CLI in place: it resolves the latest release by
+following the `/releases/latest` redirect (no API token, no rate-limit),
+compares semver against the running build, downloads the
+`zed-<target>.{tar.gz,zip}` asset matching this platform (arch + OS + gnu/musl),
+and atomically replaces the running binary — safe on Unix because the running
+process keeps its open inode. `--check` reports without installing; `--force`
+reinstalls. See
+[`zed-cli/src/update.rs`](https://github.com/zed-pkg/zed-cli/blob/main/src/update.rs).
+
 ## Status: implemented
 
 The release matrix, `cross` setup, musl static builds, archived per-target
-uploads, the OS/arch-detecting `curl | bash` installer, and in-place `zed
-self-update` all exist today. Planned: publishing the Homebrew formula to a
+uploads, the OS/arch-detecting `curl | bash` installer, and in-place
+`zed self-update` (alias `zed update`; `--check` reports only, `--force`
+reinstalls) all exist today. Planned: publishing the Homebrew formula to a
 `zed-pkg/homebrew-tap` tap automatically on release, and Scoop (Windows).

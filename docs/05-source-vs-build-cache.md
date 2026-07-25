@@ -41,20 +41,24 @@ zed-pkg deliberately separates them:
 
 ## Status: implemented
 
-Both caches exist. `zed install --allow-build` runs a dependency's `[build]`
-step inside an isolated staging copy of its source
+Both caches exist. The source store is content-addressed and
+platform-independent, as before. `zed install --allow-build` (or a standalone
+`zed build [--force]`) runs a dependency's `[build]` step inside an isolated
+staging copy of its source
 ([`build_artifact`](https://github.com/zed-pkg/zed-cli/blob/main/src/ops.rs)),
 installs its `[build-dependencies]` into that staging dir only (never into the
-consumer's `zed_modules/`), then promotes the result into the per-`(sha256,
-platform)` build cache via a temp dir and atomic rename. The immutable source
-store is never mutated, and a per-`(platform, sha)` lock
+consumer's `zed_modules/`), then promotes the result into the build cache via
+a temp dir and atomic rename. The cache is keyed by `(platform, source sha256,
+build command)` under `~/.zed-pkg/builds/` — folding in the command means a
+consumer override never collides with the package's own build — and the
+immutable source store is never mutated. A per-`(platform, key)` lock
 ([`Store::build_lock`](https://github.com/zed-pkg/zed-cli/blob/main/src/store.rs))
 serializes concurrent builds of the same artifact.
 
 Builds run arbitrary package-author code, so they are opt-in behind
 `--allow-build` (`ZED_PKG_ALLOW_BUILD=1`); without it the pristine source is
 linked and a warning explains how to enable it. A consumer can replace or
-supply a broken dependency's build with `[overrides.build."org/name"]`. Source
-and prebuilt-binary packages that need no build step install with no change.
-Planned: folding the toolchain version and declared build inputs into the
-cache key, and a standalone `zed build`.
+supply a broken dependency's build with `[overrides.build."org/name"]`. Tests
+assert the build runs once (the second install is a cache hit) and that a
+consumer override replaces the upstream build. Planned: folding the toolchain
+version and declared build inputs into the cache key.
