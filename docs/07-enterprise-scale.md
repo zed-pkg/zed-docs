@@ -41,7 +41,7 @@ versions and without polluting the OS `PATH`. Adapter-linked layouts
 dependency binaries where they expect them. Planned: an opt-in global shim on
 `PATH` so top-level tools run without the `zed run` prefix.
 
-## 4. Governance (implemented core; SSO/audit/quotas planned)
+## 4. Governance (implemented core; SSO/teams planned)
 
 - **Namespaces & RBAC:** orgs are claimed and tokens are org-scoped
   ([`zed org claim`](https://github.com/zed-pkg/zed-cli)); each token carries a
@@ -51,12 +51,25 @@ dependency binaries where they expect them. Planned: an opt-in global shim on
   rejected, and unscoped admin tokens publish anywhere (npm-style granular
   tokens). See
   [`api-server/src/rbac.rs`](https://github.com/zed-pkg/zed-api-server.rs).
+- **Audit log:** every mutation of published state — `publish`, `yank`,
+  `unyank`, `org_claim` — appends a row naming the *token* that acted (its
+  name and role, never its secret), the subject (`org/name@version`), and for
+  a publish the artifact digest. Read it with
+  `zed org audit <slug> [--limit N]` or `GET /v1/orgs/{org}/audit`. It is
+  **owner-only**, since the trail names who acted; a `publisher`/`reader`
+  token gets `403 insufficient_role`. The actor id is deliberately *not* a
+  foreign key and the name/role are denormalized, so the trail survives the
+  token being revoked or deleted. Recording is best-effort *after* the
+  mutation commits: a failed audit write is logged loudly rather than
+  converting a successful publish into an error the client would retry
+  against an immutable version. See
+  [`api-server/src/audit.rs`](https://github.com/zed-pkg/zed-api-server.rs).
 - **Self-hosting:** the whole registry is two small Rust services + Postgres +
   any S3 bucket, so a company runs a private registry behind its firewall
   ([zed-infra](https://github.com/zed-pkg/zed-infra)); `ZED_PKG_REGISTRY`
   (or a `file://` mirror) repoints the CLI.
-- **Planned:** multi-user teams with per-member roles, audit logs, SSO,
-  mirror/proxy of the public registry, and per-org storage quotas.
+- **Planned:** multi-user teams with per-member roles, SSO, mirror/proxy of
+  the public registry, and per-org storage quotas.
 
 ## Monorepo ergonomics (implemented)
 
