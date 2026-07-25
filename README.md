@@ -21,6 +21,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [11](docs/11-kubernetes-deployment.md) | Deploying the registry to Kubernetes (GitOps app-of-apps) | implemented |
 | [12](docs/12-in-cluster-e2e.md) | In-cluster e2e (kind + in-memory profile + Argo CD) | implemented |
 | [13](docs/13-remote-browser-grid-e2e.md) | Remote browser-grid e2e (ORES clusters, AWS + Hetzner) | partial |
+| [14](docs/14-client-sync-and-opto-sync-clients.md) | Client-side sync patterns + opto-sync-clients adoption | direction set |
 
 <sub>\* Enterprise features are implemented except SSO, audit logs, and per-org
 storage quotas, which remain planned (see [doc 7](docs/07-enterprise-scale.md)).</sub>
