@@ -101,5 +101,5 @@ cluster DB, then runs every doc-10 suite against the NodePorts.
 The `cluster/` harness, the in-memory manifests, and the Argo CD app-of-apps all
 exist and run green: the standalone CLI smoke, plus the full doc-10 suite
 (Playwright + Puppeteer + Selenium + CLI lifecycle, now including
-`cli-advanced`, `api-registry`, and `api-validation`) against the
-cluster-hosted, GitOps-deployed stack.
+`cli-advanced`, `api-registry`, `api-validation`, and `circular-deps`) against
+the cluster-hosted, GitOps-deployed stack.
