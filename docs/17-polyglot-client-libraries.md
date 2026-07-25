@@ -84,6 +84,16 @@ Naming defaults to `<name>-<target>`, which is what produces
 `fiducia-clients-java`. Override per target with `name = "…"` when an
 ecosystem expects a different spelling (e.g. `fiducia-js-sdk`).
 
+The declaration is also the isolation allowlist. `zed pack` refuses missing
+target directories, duplicate source roots, duplicate/invalid published names,
+unsafe paths, nested target manifests, and unknown adapters. Only files below
+the declared target root enter that artifact (plus a repository-level
+license/notice when needed). The target directory is re-rooted, so
+`clients/ts/package.json` becomes `package.json` in the Node artifact.
+Development caches such as `node_modules`, Cargo `target`, `.dart_tool`,
+`.gradle`, generated `build` trees, Python bytecode/virtualenvs, and
+Erlang/Elixir build dependencies are excluded.
+
 ### Versioning: lockstep by default
 
 All targets publish at the repo's single `[package].version`. That is the
@@ -151,16 +161,46 @@ top of what zed installs — so the native toolchain recognizes it immediately.
 3. `zed publish` → N packages at one version.
 4. Consumers depend on the language package they need.
 
+The repository checks in one `.zpkg.lock` beside the root manifest. That lock
+pins Zed dependencies used to build/test the source repository; it is not a
+catalog of the packages produced by `[targets]`. Consumer repositories create
+their own lock entries for the exact language package they selected, including
+artifact sha256, byte size, VCS tag, commit, and registry.
+
+### Release preflight
+
+Run this sequence from the polyglot repository:
+
+```sh
+# Native contract/parity tests remain owned by the repository.
+./scripts/check-all-clients
+
+# Structural checks + deterministic language-only artifacts.
+zed pack
+
+# Verify the common tag/commit and show the complete fan-out without mutation.
+zed publish --dry-run
+
+# Upload all targets in deterministic target-name order.
+zed publish
+```
+
+All targets share one verified VCS tag/commit. If a multi-target upload is
+interrupted, rerunning `zed publish` skips byte-identical targets already in
+the registry and continues; a same-version/different-sha target is rejected.
+This gives release-set retry safety without weakening version immutability.
+
 The seven repos this is for: `fiducia-clients`, `sonus-auris-clients`,
 `daedalus-clients`, `zed-clients`, `shared-auth-clients`, `scintilla-clients`,
 `athleto-clients`.
 
 ## Status
 
-- **Implemented**: the `[targets]` schema, per-target name derivation, the
-  derived standalone manifest, target validation, `[install].target` +
-  `--target` + project inference, and install-side subtree selection for
-  path/workspace deps that point at the polyglot root
-  (`zed-interfaces`, `zed-cli`).
-- **Next**: `zed publish` fan-out (publish each target as its own package in
-  one command), and the seven client repos' manifests.
+Implemented in `zed-interfaces` and `zed-cli`: `[targets]`, collision/path
+validation, per-target derived manifests, deterministic re-rooted artifact
+fan-out, publish fan-out with retry safety, target-aware install compatibility,
+and generated JSON Schema. Manifests and empty initial lockfiles are checked
+into the available Fiducia, Daedalus, Zed, shared-auth, Scintilla, and AthletO
+client repositories. The listed Sonus Auris client repository does not yet
+exist locally or on its declared GitHub path, so it cannot be packaged until
+its language directories exist.

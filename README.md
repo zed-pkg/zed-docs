@@ -24,7 +24,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [14](docs/14-client-sync-and-opto-sync-clients.md) | Client-side sync patterns + opto-sync-clients adoption | direction set |
 | [15](docs/15-manifest-and-dep-locations.md) | The manifest, where deps go, complementing npm/maven | implemented |
 | [16](docs/16-zed-pkg-test-ci.md) | zed-pkg-test CI harness (GitHub Actions only) | node + rust proven |
-| [17](docs/17-polyglot-client-libraries.md) | Polyglot client libraries: one repo, one package per language | schema + install done; publish fan-out next |
+| [17](docs/17-polyglot-client-libraries.md) | Polyglot client libraries: one repo, one package per language | implemented |
 
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
 quotas, which remain planned. Audit logs shipped (`zed org audit`,
