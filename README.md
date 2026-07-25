@@ -18,6 +18,8 @@ in order. Where a design is already implemented, the doc links to the code.
 | [8](docs/08-fast-rust-ci.md) | Fast Rust CI (<3 min) | implemented |
 | [9](docs/09-cross-platform-distribution.md) | Multi-OS / multi-arch CLI distribution | implemented |
 | [10](docs/10-e2e-testing.md) | End-to-end testing across servers, CLI, and browsers | implemented |
+| [11](docs/11-kubernetes-deployment.md) | Deploying the registry to Kubernetes (GitOps app-of-apps) | implemented |
+| [12](docs/12-in-cluster-e2e.md) | In-cluster e2e (kind + in-memory profile + Argo CD) | implemented |
 
 <sub>\* Enterprise features are implemented except SSO, audit logs, and per-org
 storage quotas, which remain planned (see [doc 7](docs/07-enterprise-scale.md)).</sub>
