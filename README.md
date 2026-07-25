@@ -25,8 +25,11 @@ in order. Where a design is already implemented, the doc links to the code.
 | [15](docs/15-manifest-and-dep-locations.md) | The manifest, where deps go, complementing npm/maven | implemented |
 | [16](docs/16-zed-pkg-test-ci.md) | zed-pkg-test CI harness (GitHub Actions only) | node + rust proven |
 
-<sub>\* Enterprise features are implemented except SSO, audit logs, and per-org
-storage quotas, which remain planned (see [doc 7](docs/07-enterprise-scale.md)).</sub>
+<sub>\* Enterprise features are implemented except SSO and per-org **storage**
+quotas, which remain planned. Audit logs shipped (`zed org audit`,
+`GET /v1/orgs/{org}/audit`); the quota that exists today is the org-claim
+squatting limit, which is a different thing. See
+[doc 7](docs/07-enterprise-scale.md).</sub>
 
 ## The model in one paragraph
 
