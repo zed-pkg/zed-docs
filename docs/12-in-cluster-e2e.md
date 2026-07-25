@@ -87,11 +87,19 @@ cluster DB, then runs every doc-10 suite against the NodePorts.
   first-publish test found the package-creation race fixed in
   [doc 11](11-kubernetes-deployment.md), and guards it: before, a 4-way
   concurrent first-publish landed 1–2/4; after, 4/4.
+- **Circular dependencies resolve, they don't loop.** The `circular-deps` suite
+  publishes a genuine mutual pair — `pkg-a` ⇄ `pkg-b` (each depends on the
+  other, publishable because publish does not validate dependency existence) —
+  plus a transitive leaf `pkg-b → pkg-c`. `zed install` from either side of the
+  cycle terminates, materializes all three into the flat content-addressed
+  `zed_modules/`, and pins each exactly once in `.zpkg.lock`. The flat store
+  (not recursively-nested `zed_modules`) is what makes the cycle a graph-dedup
+  problem rather than an infinite directory walk.
 
 ## Status: implemented
 
 The `cluster/` harness, the in-memory manifests, and the Argo CD app-of-apps all
 exist and run green: the standalone CLI smoke, plus the full doc-10 suite
 (Playwright + Puppeteer + Selenium + CLI lifecycle, now including
-`cli-advanced`, `api-registry`, and `api-validation`) against the
-cluster-hosted, GitOps-deployed stack.
+`cli-advanced`, `api-registry`, `api-validation`, and `circular-deps`) against
+the cluster-hosted, GitOps-deployed stack.
