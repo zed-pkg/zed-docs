@@ -90,18 +90,36 @@ page shows the `zed add …` snippet, and the security headers are present.
 
 ## Status: partially verified
 
-- **AWS — verified.** The `dd-browser-test-server` is healthy (`/healthz`,
-  `/tools` → Playwright 1.56, Puppeteer 24.43, Selenium 4.44), and an in-cluster
-  `POST /run` executed a real navigation-and-extract scenario through **all
-  three** back-ends (example.com → `<h1>` "Example Domain": Playwright ~108ms,
-  Puppeteer ~167ms, Selenium ~640ms). Gateway auth (`ALL_DOGS`) works for the
-  diagnostics.
-- **Hetzner — grid currently down.** The gateway is reachable and auth-gated,
-  but `/browser-test/*` returns `502` (the `dd-browser-test-server` upstream is
-  unhealthy), and node SSH `:22` was refused from the test host, so in-cluster
-  `/run` could not be exercised. The mechanism is identical to AWS (same synced
-  manifests) once the deployment is healthy.
-- **zed UI through the grid — pending a cluster-reachable zed.** The runner and
-  scenarios are committed; driving them against the zed UI requires the zed
-  stack deployed into (or reachable from) the target cluster per the constraint
-  above.
+- **AWS — both servers verified working.** `dd-browser-test-server` is healthy
+  (`/tools` → Playwright 1.56, Puppeteer 24.43, Selenium 4.44) and an in-cluster
+  `POST /run` ran a real navigate-and-extract through **all three** back-ends
+  (example.com → `<h1>` "Example Domain": Playwright ~108ms, Puppeteer ~167ms,
+  Selenium ~640ms). The dedicated **`dd-selenium-server`** (`:8105`, its own
+  Grid on `:4444`) also ran a real scenario (`ok:true`, "Example Domain"), so
+  the Selenium server is confirmed driving a browser, not just answering
+  `/healthz`. AWS in-cluster access is the `dd-ec2-runtime` kube context; the
+  node has `ctr`/`nerdctl` and the `dd-next-1` repo mounted (the self-build
+  works).
+- **Hetzner — down, root cause diagnosed (a platform bug, not the server).**
+  The current cluster is the 3-node HA one (fsn1/nbg1/hel1 + a worker), reached
+  by `ssh root@167.233.100.88` with `~/.ssh/id_hetzner` (the old
+  `95.217.171.250` gateway is stale → its nginx `502`s). There, the `selenium`
+  **Grid container is healthy and serving sessions**, but the `selenium-api`
+  (`:8105`) and `dd-browser-test-server` containers are in CrashLoopBackOff with
+  thousands of restarts: `cd /opt/dd-next-1/... : No such file or directory`.
+  The `dd-next-runtime` deployments mount a hostPath repo that exists on the
+  single AWS node but **not on the Hetzner nodes**, so the Maven self-build
+  never runs. Fix is a platform change (put the repo on the Hetzner nodes, or
+  switch these deployments to a prebuilt image) — out of scope for zed.
+- **zed UI through the grid — blocked on making zed reachable.** `/run`
+  navigates from inside the cluster, so it needs a zed UI the grid can reach.
+  The local `kind` zed isn't reachable from AWS/Hetzner, and every
+  low-touch path to change that is currently closed: pushing the `:dev` images
+  to ghcr needs `write:packages` (the token has only `read:packages`); the AWS
+  node's role can't read the `dd-img-xfer` S3 bucket; node SSH `:22` is
+  SG-blocked; and the available tunnel (ngrok) has a suspended account. The
+  remaining route is a privileged in-cluster image-import (mount the containerd
+  socket, `kubectl cp` the image, `ctr -n k8s.io images import`) followed by
+  deploying the in-memory profile to the cluster — deferred as an explicit,
+  reversible operation. The runner (`cluster/remote-grid.sh`) + scenarios are
+  committed and ready to point at the zed UI the moment it is cluster-reachable.
