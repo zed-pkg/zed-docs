@@ -26,8 +26,11 @@ in order. Where a design is already implemented, the doc links to the code.
 | [16](docs/16-zed-pkg-test-ci.md) | zed-pkg-test CI harness (GitHub Actions only) | node + rust proven |
 | [17](docs/17-polyglot-client-libraries.md) | Polyglot client libraries: one repo, one package per language | schema + install done; publish fan-out next |
 
-<sub>\* Enterprise features are implemented except SSO, audit logs, and per-org
-storage quotas, which remain planned (see [doc 7](docs/07-enterprise-scale.md)).</sub>
+<sub>\* Enterprise features are implemented except SSO and per-org **storage**
+quotas, which remain planned. Audit logs shipped (`zed org audit`,
+`GET /v1/orgs/{org}/audit`); the quota that exists today is the org-claim
+squatting limit, which is a different thing. See
+[doc 7](docs/07-enterprise-scale.md).</sub>
 
 ## The model in one paragraph
 

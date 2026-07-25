@@ -81,10 +81,10 @@ in-memory profile deploys there as a ClusterIP service; the grid then points at
 
 [`cluster/remote-grid.sh`](https://github.com/zed-pkg/zed-e2e/blob/main/cluster/remote-grid.sh)
 codifies the in-cluster driver: given a kube context and a target web URL, it
-POSTs the zed UI scenarios in
-[`cluster/remote/scenarios.json`](https://github.com/zed-pkg/zed-e2e/blob/main/cluster/remote)
-through the pod for **each** of playwright / puppeteer / selenium and asserts
-the extracted text + `finalTitle`. The scenarios mirror the local `web-ui`
+POSTs the zed UI scenarios — declared inline in that script as `run_scenario
+<tool> <name> <expected-substring> <steps-json>` calls — through the pod for
+**each** of playwright / puppeteer / selenium and asserts the extracted text +
+`finalTitle`. The scenarios mirror the local `web-ui`
 checks: the home recency list renders, HTMX search returns a match, a package
 page shows the `zed add …` snippet, and the security headers are present.
 
