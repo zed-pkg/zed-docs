@@ -1,105 +1,145 @@
-# 14. Client-side sync: patterns and the opto-sync-clients adoption
+# 14. Client-side sync: patterns and the opto-sync package adoption
 
-**Issue:** zed's offline-first story (optimistic writes in the browser → a
-durable local store → sync to Postgres/Supabase) is exactly the problem a whole
-generation of sync engines already solved. Rather than grow yet another bespoke
-engine in `zed-sync`, the direction is to consume
+**Issue:** zed's offline-first story—optimistic writes in the browser, a durable
+local store, and synchronization with Postgres/Supabase—is the same class of
+problem solved by established sync engines. Rather than maintain two competing
+implementations, the direction is to consume
 [`github.com/opto-sync/opto-sync-clients`](https://github.com/opto-sync/opto-sync-clients),
-which wraps the C merge core
-[`syncer.c`](https://github.com/opto-sync/syncer.c). This doc records the
-best-practice patterns distilled from the field, confirms the opto-sync client
-uses `syncer.c` correctly, and lists exactly what zed-sync still has to supply.
+which wraps the shared C reconciliation core
+[`syncer.c`](https://github.com/opto-sync/syncer.c).
+
+This document records the required correctness patterns, the current state of
+the opto-sync implementation, and the package boundary zed uses to adopt it.
 
 ## What the field does (distilled)
 
 Surveying Linear, Replicache/Zero, ElectricSQL, PowerSync, RxDB, WatermelonDB,
-and the CRDT engines (Automerge/Yjs), the patterns that consistently matter for
-a JSONB-merge (not full-CRDT) client:
+and CRDT engines such as Automerge and Yjs, the patterns that consistently
+matter for a JSONB-merge client are:
 
-1. **Two-tier optimistic write** — apply to the in-memory/reactive view
-   instantly, and persist to a **durable local queue before any network I/O**.
-   The pending write must never live only in a JS variable.
-2. **Durable queue that survives restart**, with a `pending/synced/failed`
-   lifecycle; the flush loop re-reads payloads from the store (crash-safe), not
-   from memory.
-3. **Exactly-once echo dedup** — every mutation carries a stable `clientId` +
-   monotonic per-client `mutationId`; the server keeps a `lastMutationID`
-   high-water mark and ignores anything `≤` it; the client drops confirmed
-   pending on pull. (Replicache's model; Linear's lack of cross-restart dedup is
-   the cautionary tale.)
-4. **Rebase-on-pull** — server state becomes the base, then un-confirmed local
-   mutations replay on top, oldest-first.
-5. **Don't timestamp-gate the overlay of your own pending writes** during rebase,
-   or a pending edit older than the server's `updatedAt` vanishes then flickers
-   back.
-6. **Field-level merge, never whole-doc/whole-array replace** — send changed
-   fields; resolve per-key/per-element so disjoint concurrent edits both survive.
-7. **Logical clock (HLC), not wall-clock, for LWW** — persisted, node-tagged,
-   observes remote stamps; one timestamp format per key; sub-ms as digit strings
-   to dodge float precision.
-8. **Explicit deletes** — an additive/LWW merge can't remove a key; use a
-   tombstone field (LWW-gated) or a delete op, and have the server retain death
-   certificates.
-9. **Idempotent replay** — re-sending a payload is a semantic no-op
-   (identity-keyed array merge, not append).
-10. **Server stays authoritative and may reject/transform** — surface rejection
-    to the app; roll back or rebase the optimistic value (don't silently revert).
-11. **Store choice** — IndexedDB for KV/document workloads (Linear, Replicache,
-    RxDB-web, Yjs); SQLite / wasm-SQLite for relational or large on-device sets
-    (PowerSync, WatermelonDB-native).
+1. **Two-tier optimistic write**—update the in-memory/reactive view immediately
+   and persist to a durable local queue before network I/O.
+2. **Restart-safe queue** with a `pending/synced/failed` lifecycle; flush from
+   durable rows, not an in-memory request list.
+3. **Exactly-once echo deduplication**—stable `clientId` plus monotonic
+   `mutationId`; the server keeps a high-water mark and ignores replays.
+4. **Rebase on pull**—authoritative server state becomes the base and every
+   unconfirmed local mutation replays oldest-first.
+5. **Do not timestamp-gate your own pending overlay.** Otherwise an older local
+   edit disappears until its push lands.
+6. **Field/element merge instead of whole-document replacement**, so disjoint
+   concurrent edits survive.
+7. **Logical clocks instead of client wall clocks** for conflict ordering.
+8. **Explicit tombstones or delete operations**; an additive merge cannot infer
+   removal safely.
+9. **Idempotent replay**—re-sending a mutation is a semantic no-op.
+10. **Server authority and durable rejection**—surface transformations or
+    rejection instead of silently reverting optimistic state.
+11. **Appropriate local storage**—IndexedDB for browser document/KV workloads;
+    SQLite for relational or larger on-device data sets.
 
-## opto-sync-clients uses syncer.c correctly
+## Current opto-sync correctness contract
 
-The C core is a pure merge function; the queue, clock, identity, rebase, and
-dedup live in the clients. The **TypeScript client** (`clients/ts`) is the
-complete one and its `syncer.c` usage is correct:
+`syncer.c` is a pure merge function. Queueing, identity, HLC state, transport,
+checkpointing, and rebase live in `opto-sync-clients`.
 
-- Reconcile options are the core's intended CRDT policy and a pinned cross-tier
-  contract: `arrayStrategy: MERGE_BY_KEY`, `arrayMatchKeys: 'id'`,
-  `resolveByTimestamp: true`, `lwwKeys: 'updatedAt,syncedAt'`,
-  `fwwKeys: 'createdAt'`. (`MERGE_BY_KEY` + `resolveByTimestamp:true` are
-  required — the core's own default `REPLACE` would drop local-only array
-  elements and skip element-level timestamp gating.)
-- Correct LWW direction (base = local, incoming = server; incoming wins unless
-  local is newer).
-- Honors the binding contract: `undefined` → core default vs `''` → "no keys";
-  the extended **path-based** override callback (not key-based); NULL only on
-  invalid JSON, surfaced as a throw (never a silent `""`).
-- It already ships the optimistic layer the checklist demands: a durable
-  Dexie/**IndexedDB** queue, an HLC, `(clientId, mutationId)` echo dedup, and
-  `rebasePending`/`localView`/`confirmSyncedUpTo`. Browser loads a real **wasm**
-  build of `syncer.c`; Node loads the N-API addon; there is **no JS-fallback
-  merge** (a merge that silently no-ops would lose writes). The **Dart** client
-  uses Drift/**SQLite** but is materially thinner (no dedup/HLC/rebase yet).
+The current clients use the canonical merge policy:
 
-## What zed-sync must supply on top
+- `arrayStrategy: MERGE_BY_KEY`;
+- `arrayMatchKeys: "id"`;
+- `resolveByTimestamp: true`;
+- LWW keys `updatedAt,syncedAt`; and
+- **no FWW key by default**.
 
-Consuming the TS package gives correct `syncer.c` usage and the full optimistic
-layer out of the box. zed-sync still owns:
+The previous recommendation to set `createdAt` as an FWW key was wrong for this
+engine. FWW is a node-level veto: a newer FWW value rejects the whole incoming
+node, even when that node carries the newest `updatedAt`. Two devices creating
+the same identity offline could therefore make one replica permanently unable
+to update the record. `createdAt` is retained as ordinary data, not as a default
+veto.
 
-- **The transport/push loop** — `triggerBackgroundSync()` is a deliberate stub.
-  Implement: `pendingMutations()` (in order) → POST each with
-  `(clientId, mutationId)` → `confirmSyncedUpTo(serverWatermark)` →
-  `recordPushFailure` on transient errors.
-- **A delete/tombstone convention** — the merge cannot remove keys. Use an
-  LWW-gated `deletedAt`/`_deleted` field merged as ordinary data; the server
-  retains death certificates so other clients learn of deletes.
-- **Per-element timestamps** — records inside a `MERGE_BY_KEY` array each need
-  their own `updatedAt` for element-level LWW; the client auto-stamps only the
-  top-level `updatedAt`.
-- **Terminal-row compaction** — prune `synced`/`failed` queue rows so the local
-  table doesn't grow unbounded.
-- **Dart/Rust parity** — if zed-sync targets those, build the rebase +
-  `(clientId, mutationId)` dedup + HLC-into-queue that currently exist only in TS.
+The implementation now includes:
 
-The current `zed-sync/sdk` (bespoke `core`/`client`/`merge`/`hlc`) stays the
-reference until this migration lands; its conformance fixture and the
-`syncer.c` semantics agree on the merge model, which is what makes the swap
-low-risk.
+- TypeScript: Dexie/IndexedDB, native Node and real browser WASM reconciliation,
+  persisted HLC, `(clientId, mutationId)` deduplication, atomic queue helpers,
+  rebase/local view, and a checkpointed protocol loop;
+- Dart: Drift/SQLite plus browser IndexedDB/WASM coverage, HLC and mutation
+  identity, atomic queue helpers, rebase, and the protocol loop;
+- Rust: first-party SQLite protocol store, runtime-neutral storage seams, HLC,
+  mutation identity, atomic application/queue transactions, rebase, and a
+  protocol driver; and
+- Gleam: the protocol queue and typed BEAM/NIF reconciliation surface.
 
-## Status: direction set
+The non-negotiable rendering rule remains:
 
-`opto-sync-clients` is the target; its TS client is verified-correct against
-`syncer.c`. The integration items above are the remaining work for zed-sync;
-none require changes to `opto-sync-clients` itself (except optionally bringing
-the Dart client to TS parity).
+> **Render `localView`, not `reconcileIncoming`.**
+
+`reconcileIncoming` does not know about mutations that are still queued.
+`localView` rebases those mutations over server state so a user's edit does not
+flicker away between pull and acknowledgement.
+
+## Zed package identities
+
+The repositories now declare Zed manifests and deterministic pack/dry-run CI:
+
+| Package | Version | Unit |
+|---|---:|---|
+| `opto-sync/syncer` | `0.2.1` | whole engine repository and native bindings |
+| `opto-sync/syncer-c` | `0.2.1` | self-contained C core |
+| `opto-sync/syncer-wasm` | `0.2.1` | self-contained browser/worker WASM binding |
+| `opto-sync/opto-sync-clients` | `0.2.0` | whole client repository |
+| `opto-sync/opto-sync-e2e` | `0.1.0` | coordinated cross-runtime conformance harness |
+
+The clients are intentionally one repository package for the first release.
+Their native manifests still reference `../../../syncer.c`; publishing
+`clients/ts`, `clients/dart`, `clients/rust`, or `clients/gleam` as isolated
+language targets would omit files required by those manifests. A deterministic
+archive that cannot build is not a valid package.
+
+Language fan-out follows only after each target can build in a clean consumer
+without a sibling Git checkout. The accepted designs are an independently
+published native binding, a hash-checked vendored core, or a native manifest
+that resolves the separately installed Zed dependency without absolute paths.
+
+## What zed-sync still owns during migration
+
+Adopting opto-sync does not remove product-specific responsibilities:
+
+- map zed's public change envelopes and write-policy enums to the opto protocol;
+- implement authentication, tenant/table authorization, and token refresh;
+- define the tombstone/deletion and retention policy for registry data;
+- connect Postgres/Supabase catch-up cursors and realtime hints to the protocol
+  driver (realtime is a hint, never the durable cursor);
+- preserve zed's telemetry and error-policy surface; and
+- prove behavior with shared conformance fixtures before removing the bespoke
+  zed-sync implementation.
+
+The migration should be adapter-first: keep zed's external API stable, route one
+runtime through `opto-sync-clients`, run both implementations against the same
+fixtures, then delete duplicated reconciliation code only after parity is
+measured.
+
+## Release and consumption order
+
+```sh
+# in each opto-sync repository
+zed pack
+zed publish --dry-run
+
+# publish dependency order after matching reviewed tags exist
+# 1. opto-sync/syncer@0.2.1 (+ c/wasm targets)
+# 2. opto-sync/opto-sync-clients@0.2.0
+# 3. opto-sync/opto-sync-e2e@0.1.0
+```
+
+Consumer lockfiles must pin the resulting artifact SHA-256, byte size, VCS tag,
+and commit. Until the registry entries exist, the source repositories keep only
+the lockfile format header rather than fabricating hashes.
+
+## Status: package-ready adoption staged
+
+The merge semantics, durable optimistic-write behavior, and cross-runtime test
+matrix are implemented. The three opto-sync repositories are Zed-package ready,
+with pinned-tooling package CI. Remaining work is release/tag publication,
+native language-slice self-containment, and the measured zed-sync adapter
+migration—not another sync engine rewrite.
