@@ -21,7 +21,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [11](docs/11-kubernetes-deployment.md) | Deploying the registry to Kubernetes (GitOps app-of-apps) | implemented |
 | [12](docs/12-in-cluster-e2e.md) | In-cluster e2e (kind + in-memory profile + Argo CD) | implemented |
 | [13](docs/13-remote-browser-grid-e2e.md) | Remote browser-grid e2e (ORES clusters, AWS + Hetzner) | partial |
-| [14](docs/14-client-sync-and-opto-sync-clients.md) | Client-side sync patterns + opto-sync-clients adoption | direction set |
+| [14](docs/14-client-sync-and-opto-sync-clients.md) | Client-side sync patterns + opto-sync package adoption | package-ready; migration staged |
 | [15](docs/15-manifest-and-dep-locations.md) | The manifest, where deps go, complementing npm/maven | implemented |
 | [16](docs/16-zed-pkg-test-ci.md) | zed-pkg-test CI harness (GitHub Actions only) | node + rust proven |
 | [17](docs/17-polyglot-client-libraries.md) | Polyglot client libraries: one repo, one package per language | implemented |
