@@ -22,7 +22,7 @@ A valid release set has all of these properties:
 
 ## Manifest convention
 
-Today, `[targets]` is authoritative for source isolation and Zed package names:
+`[targets]` is authoritative for source isolation and Zed package names:
 
 ```toml
 [targets.repository]
@@ -41,21 +41,57 @@ name = "fiducia-client-rust"
 
 Native registry identity remains authoritative in the native manifest inside the target root (`package.json`, `Cargo.toml`, `pom.xml`, `.gemspec`, and so on). CI must compare the target and native manifests rather than duplicate every ecosystem field in `.zpkg.toml`.
 
-A future schema extension may add declarative release routing, but it must reference native metadata rather than replace it. The proposed shape is:
+The Zed manifest declares where that already-defined package should go:
 
 ```toml
 [targets.nodejs.native]
 registry = "npm"
 package = "@fiducia/client"
+forge = ["github-packages", "gitlab-packages", "bitbucket-packages"]
 
-[targets.rust.native]
-registry = "crates-io"
-package = "fiducia-client"
+[targets.golang.native]
+registry = "go-modules"
+package = "github.com/fiducia-cloud/fiducia-clients/clients/go"
+tag_format = "clients/go/v{version}"
+forge = ["gitlab-packages"]
 ```
 
-That extension should first produce a deterministic release plan and only later execute authenticated uploads. Arbitrary shell commands do not belong in the manifest.
+The native manifest still owns the package name and version; the duplicated
+identity is checked before a plan is emitted. The route exists so release
+automation does not have to guess a destination from a target name.
+`tag_format` is optional except where the ecosystem requires a distinct tag.
+A single-language package with its native manifest at the repository root uses
+the same fields under `[publish.native]`.
 
-## GitHub, GitLab, and Bitbucket
+`zed release plan --json` emits the Zed artifacts, canonical native packages,
+forge mirrors, and exact VCS tags without reading credentials or uploading.
+`zed release preflight` then runs fixed package-manager checks with registry
+credential environment variables removed. Arbitrary manifest shell commands
+are not part of this model.
+
+### Package-registry compatibility
+
+The forge entry means “publish the same native package format to this forge's
+package registry.” It does not mean “put every language into every forge”:
+
+| Native format | Canonical destination | GitHub Packages | GitLab | Bitbucket Packages |
+| --- | --- | --- | --- | --- |
+| npm | npmjs.com | yes | yes | yes |
+| Maven | Maven Central | yes | yes | yes |
+| RubyGems | rubygems.org | yes | yes | no |
+| NuGet | nuget.org | yes | yes | no |
+| PyPI | pypi.org | no | yes | no |
+| Composer | Packagist | no | yes | no |
+| Go modules | VCS/module proxy | no | yes | no |
+| Cargo | crates.io | no | no | no |
+| Dart/Flutter | pub.dev | no | no | no |
+
+The interface validates this matrix and rejects duplicate or impossible
+provider/format pairs during manifest parsing. Support here means the route can
+be represented and planned; authenticated upload adapters are a later,
+separately reviewed boundary.
+
+## GitHub, GitLab, and Bitbucket source mirrors
 
 The normal whole-repository mirror is the ordinary repository remote. A language-only forge mirror is optional and should not become a submodule of the canonical repository.
 
@@ -112,11 +148,14 @@ Implemented now:
 - deterministic target re-rooting and derived manifests;
 - retry-safe Zed publish fan-out;
 - CI checks for target isolation and native package manifests;
-- native package-manager dry-runs in repositories where the packages are already self-contained.
+- typed canonical-native and forge-package routes;
+- provider/format compatibility and package identity/version validation;
+- separate native VCS tag formats for tag-resolved subdirectory packages;
+- deterministic `zed release plan` output;
+- credential-free native package-manager preflight where packages are already self-contained.
 
 Still follow-up work:
 
-- first-class `[targets.<name>.native]` schema and release-plan output;
 - authenticated native registry adapters;
 - release-set attestations and provenance aggregation;
 - generic target-only forge mirror automation;
