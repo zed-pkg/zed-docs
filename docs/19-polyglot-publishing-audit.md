@@ -1,44 +1,35 @@
 # 19. Polyglot publishing: what is actually verified
 
 Doc 18 sets the release model for multi-registry fan-out. This doc is its
-empirical counterpart: what CI now *proves*, what it *found*, and which of doc
-18's conventions do not survive contact with the implementation.
+empirical counterpart: what CI now *proves* and what it *found* when run
+against real repositories.
 
 Everything below was run against the nine `*-clients` repositories and a
 five-language fixture, not reasoned about.
 
-## Correction to doc 18: `[targets.repository] dir = "."` does not work
+## Goal 2 works: `[targets.repository]` is supported
 
-Doc 18's manifest example opens with:
+An earlier draft of this doc claimed `dir = "."` was rejected by `zed pack`.
+That was wrong, and it is worth recording why: `pack_all` does guard against a
+target carrying its own `.zpkg.toml`, but the guard **exempts the repository
+root explicitly**:
 
-```toml
-[targets.repository]
-dir = "."
-name = "fiducia-clients-repository"
+```rust
+// `dir = "."` is the explicit whole-repository target used alongside
+// language slices. Its manifest is the source manifest by definition
+// and is replaced with the derived single-target manifest below.
+// Nested targets must still never carry a second manifest.
+if section.dir != "." && source.join(MANIFEST_FILE).exists() {
 ```
 
-`zed pack` rejects it. `pack_all` bails on any target whose source root
-contains the repository's own `.zpkg.toml`, and `dir = "."` always does:
+with a test asserting the repository artifact contains every language slice.
+So doc 18's convention is correct as written, and the whole-repository artifact
+(goal 2) ships alongside the isolated slices (goal 3) from one manifest.
 
-```
-target `repository` contains its own .zpkg.toml; declare packages only in
-the repository-root manifest
-```
-
-The failure is not scoped to that target — `zed pack` aborts the whole
-fan-out, so **no** target in such a manifest can be packed.
-`sonus-auris-clients` shipped exactly this manifest and could not publish
-anything at all until it was removed.
-
-So the "complete-repository Zed artifact" in doc 18's release invariants is
-not currently obtainable for a polyglot repo *via `[targets]`*. `[targets]` is
-a partition of the repo into isolated language roots; a root-level entry both
-swallows every sibling slice (defeating doc 17's argument) and trips the
-nested-manifest guard. Goal 2 needs its own manifest concept — it is not a
-target.
-
-`scripts/check-native-parity.py` now rejects `dir = "."` and any target nested
-inside another, so this fails at review time rather than at release time.
+The parity gate therefore permits `dir = "."` and enforces isolation only
+*between language targets*: a language target nested inside another language
+target would put the inner language's bytes in the outer artifact, which is the
+thing doc 17 exists to prevent.
 
 ## What CI proves now
 
@@ -70,7 +61,6 @@ native package.
 | --- | --- |
 | `test_*.py` shipped in every published Python slice — `DEFAULT_EXCLUDES` had `*_test.py` but not unittest's default `test*.py` pattern | `zed-interfaces/src/excludes.rs`, fixed |
 | Version drift: `pubspec.yaml` at `1.0.0` against a repo version of `0.1.0` | `daedalus-clients`, fixed |
-| Manifest unpackable via `dir = "."` | `sonus-auris-clients`, fixed |
 | Go subdirectory modules cannot be published to the module proxy | fiducia, quaestor, athleto, daedalus, zed-clients — **open** |
 
 ## The Go blocker is the highest-leverage gap
