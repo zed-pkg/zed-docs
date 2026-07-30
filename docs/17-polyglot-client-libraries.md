@@ -178,7 +178,13 @@ Run this sequence from the polyglot repository:
 # Structural checks + deterministic language-only artifacts.
 zed pack
 
-# Verify the common tag/commit and show the complete fan-out without mutation.
+# Validate native identities/versions and show Zed, native, forge, and tag fan-out.
+zed release plan
+
+# Ask native package managers to build/check without credentials or uploads.
+zed release preflight
+
+# Verify the common Zed tag/commit and show Zed fan-out without mutation.
 zed publish --dry-run
 
 # Upload all targets in deterministic target-name order.
@@ -199,8 +205,8 @@ The seven repos this is for: `fiducia-clients`, `sonus-auris-clients`,
 Implemented in `zed-interfaces` and `zed-cli`: `[targets]`, collision/path
 validation, per-target derived manifests, deterministic re-rooted artifact
 fan-out, publish fan-out with retry safety, target-aware install compatibility,
-and generated JSON Schema. Manifests and empty initial lockfiles are checked
-into the available Fiducia, Daedalus, Zed, shared-auth, Scintilla, and AthletO
-client repositories. The listed Sonus Auris client repository does not yet
-exist locally or on its declared GitHub path, so it cannot be packaged until
-its language directories exist.
+typed canonical/forge release routes, credential-free native preflight, and
+generated JSON Schema. The audited client repositories carry root manifests,
+whole-repository targets, and isolated per-language targets; native routes are
+declared only for package manifests that are not explicitly opted out or
+blocked by unpublished path dependencies.

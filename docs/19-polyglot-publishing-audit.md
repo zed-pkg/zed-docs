@@ -61,24 +61,30 @@ native package.
 | --- | --- |
 | `test_*.py` shipped in every published Python slice — `DEFAULT_EXCLUDES` had `*_test.py` but not unittest's default `test*.py` pattern | `zed-interfaces/src/excludes.rs`, fixed |
 | Version drift: `pubspec.yaml` at `1.0.0` against a repo version of `0.1.0` | `daedalus-clients`, fixed |
-| Go subdirectory modules cannot be published to the module proxy | fiducia, quaestor, athleto, daedalus, zed-clients — **open** |
+| Go subdirectory modules need a target-specific tag, not the repository-wide tag | fiducia, quaestor, athleto, daedalus — **represented by native `tag_format`; authenticated release execution remains open** |
 | Slices depending on something outside themselves: a re-rooted artifact cannot resolve `../..`, so the native dry-run fails and a consumer's `dart pub get` / `cargo build` would too | `athleto-clients` dart (`path: ../../../athleto-sync`, `../../../athleto-interfaces`), `scintilla-clients` flutter (`path: ../dart`), `fiducia-clients` rust (`git =` dep on `fiducia-interfaces`, which crates.io forbids) — **open** |
 | Published slices did not declare which language they were for, so nothing could stop a `-java` client installing into a Node project | `zed-interfaces` `package.language`/`ecosystem` + the install guard, fixed |
 
-## The Go blocker is the highest-leverage gap
+## The Go tag gap is now represented explicitly
 
 A Go module in a subdirectory is fetched by the tag `<subdir>/vX.Y.Z`. That is
 the module proxy's rule, not a convention. `clients/go` at `0.1.0` therefore
 requires the tag `clients/go/v0.1.0`.
 
-`[publish].tag_format` is a single repo-wide template, so zed can only produce
-`v0.1.0`. Every polyglot repo here with a Go client in a subdirectory cannot
-publish it to the proxy.
+`[publish].tag_format` remains the repository-wide Zed release tag. A native
+Go route now adds its own tag template:
 
-This is the same mechanism doc 18 reaches for with `git subtree split` and
-`zed/<target>/v<version>` tags — and it generalizes to Swift and any ecosystem
-that resolves a subdirectory by tag. Per-target tag formats are the smallest
-change that unblocks the most.
+```toml
+[targets.golang.native]
+registry = "go-modules"
+package = "github.com/fiducia-cloud/fiducia-clients/clients/go"
+tag_format = "clients/go/v{version}"
+```
+
+Manifest validation requires the directory prefix, and the release plan emits
+`clients/go/v0.1.0` alongside the repository tag `v0.1.0`. Creating and
+attesting that native tag belongs to the future authenticated release runner.
+Target-only *source* mirrors remain a separate `git subtree split` concern.
 
 ## Identity cannot be derived, only declared
 
@@ -96,8 +102,8 @@ python      fiducia/fiducia-clients-python@0.1.0   PyPI             fiducia-clie
 31 target(s): 29 publishable to a native registry, 2 to zpkg.tech only
 ```
 
-Two further constraints the proposed `[targets.<name>.native]` schema has to
-accommodate:
+Two further constraints the implemented `[targets.<name>.native]` schema
+accommodates:
 
 - **Not every target has a registry.** `shell` and `matlab` are legitimately
   zpkg.tech-only. `registry` must be optional, not defaulted.
@@ -109,6 +115,8 @@ accommodate:
 
 ## Status
 
-Verified in CI across nine client repositories and one fixture. The four items
-under doc 18's "still follow-up work" remain open; per-target `tag_format`
-should come first, because it is the one blocking a shipped ecosystem today.
+Verified in CI across nine client repositories and one fixture. Typed native
+routes, forge compatibility validation, deterministic release planning, and
+per-route tag formats are implemented. Authenticated registry uploads,
+release-set attestations, and generic target-only source-mirror automation
+remain open.
