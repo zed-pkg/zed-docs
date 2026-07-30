@@ -26,6 +26,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [16](docs/16-zed-pkg-test-ci.md) | zed-pkg-test CI harness (GitHub Actions only) | node + rust proven |
 | [17](docs/17-polyglot-client-libraries.md) | Polyglot client libraries: one repo, one package per language | implemented |
 | [18](docs/18-multi-registry-release-fanout.md) | Native registry fan-out and target-only forge mirrors | direction set |
+| [19](docs/19-polyglot-publishing-audit.md) | Polyglot publishing: what is actually verified (audit of 18) | verified in CI |
 
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
 quotas, which remain planned. Audit logs shipped (`zed org audit`,
