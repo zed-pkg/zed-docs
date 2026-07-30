@@ -62,6 +62,8 @@ native package.
 | `test_*.py` shipped in every published Python slice — `DEFAULT_EXCLUDES` had `*_test.py` but not unittest's default `test*.py` pattern | `zed-interfaces/src/excludes.rs`, fixed |
 | Version drift: `pubspec.yaml` at `1.0.0` against a repo version of `0.1.0` | `daedalus-clients`, fixed |
 | Go subdirectory modules cannot be published to the module proxy | fiducia, quaestor, athleto, daedalus, zed-clients — **open** |
+| Slices depending on something outside themselves: a re-rooted artifact cannot resolve `../..`, so the native dry-run fails and a consumer's `dart pub get` / `cargo build` would too | `athleto-clients` dart (`path: ../../../athleto-sync`, `../../../athleto-interfaces`), `scintilla-clients` flutter (`path: ../dart`), `fiducia-clients` rust (`git =` dep on `fiducia-interfaces`, which crates.io forbids) — **open** |
+| Published slices did not declare which language they were for, so nothing could stop a `-java` client installing into a Node project | `zed-interfaces` `package.language`/`ecosystem` + the install guard, fixed |
 
 ## The Go blocker is the highest-leverage gap
 
