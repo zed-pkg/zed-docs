@@ -114,6 +114,10 @@ Manifest validation requires the directory prefix, and the release plan emits
 attesting that native tag belongs to the future authenticated release runner.
 Target-only *source* mirrors remain a separate `git subtree split` concern.
 
+The same mechanism generalizes beyond Go: Swift, and any ecosystem that
+resolves a subdirectory by tag, are served by the same per-target
+`tag_format` rather than a repo-wide template.
+
 ## Identity cannot be derived, only declared
 
 Doc 18 is right that native manifests stay authoritative. The audit shows *how
