@@ -62,8 +62,37 @@ native package.
 | `test_*.py` shipped in every published Python slice — `DEFAULT_EXCLUDES` had `*_test.py` but not unittest's default `test*.py` pattern | `zed-interfaces/src/excludes.rs`, fixed |
 | Version drift: `pubspec.yaml` at `1.0.0` against a repo version of `0.1.0` | `daedalus-clients`, fixed |
 | Go subdirectory modules need a target-specific tag, not the repository-wide tag | fiducia, quaestor, athleto, daedalus — **represented by native `tag_format`; authenticated release execution remains open** |
-| Slices depending on something outside themselves: a re-rooted artifact cannot resolve `../..`, so the native dry-run fails and a consumer's `dart pub get` / `cargo build` would too | `athleto-clients` dart (`path: ../../../athleto-sync`, `../../../athleto-interfaces`), `scintilla-clients` flutter (`path: ../dart`), `fiducia-clients` rust (`git =` dep on `fiducia-interfaces`, which crates.io forbids) — **open** |
+| The gate ran the ecosystem's tooling against the *source subtree* while claiming to check "exactly what the registry would receive". Packing strips dev files, hoists `LICENSE` into every slice, and substitutes the derived manifest — so it both missed real problems and invented ones: scintilla's dart slice was rejected for a missing LICENSE the artifact contains | all `zed-polyglot.yml`, fixed (`--json` now emits the artifact name; jobs unpack it) |
+| `dir = "."` was assigned a native registry by inference. A repo keeping its own workspace `package.json` at the root had that mistaken for the whole-repository target's identity, and the dry-run tried to publish the entire repo to npm — contradicting `Manifest::validate`, which rejects a native route on `dir = "."` | `check-native-parity.py`, fixed |
+| Default excludes stripped `CHANGELOG*` while `publish.exclude` can only *add* patterns, so no repository could ship one — and `dart pub publish` fails a package outright without it | `zed-interfaces/src/excludes.rs`, fixed (`include_readme` covers both) |
 | Published slices did not declare which language they were for, so nothing could stop a `-java` client installing into a Node project | `zed-interfaces` `package.language`/`ecosystem` + the install guard, fixed |
+
+## A retracted finding: "slices depend on things outside themselves"
+
+An earlier revision of this doc listed three slices as unpublishable because
+their manifests reach outside the slice — `athleto-clients` dart
+(`path: ../../../athleto-sync`), `scintilla-clients` flutter (`path: ../dart`),
+`fiducia-clients` rust (a `git =` dependency crates.io forbids). That finding was
+wrong, and the reason is worth keeping.
+
+Every one of those slices is **explicitly opted out of native publishing**:
+`publish_to: none` in the two pubspecs, `publish = false` in the Cargo manifest.
+The parity gate already honors both and reports them as `ok; publish_to: none` /
+`ok; publish = false`. A package that is not going to a native registry may
+legitimately depend on a sibling checkout.
+
+athleto's dart manifest in fact already uses the idiomatic shape — hosted
+versions under `dependencies`, paths only under `dependency_overrides`, with a
+comment noting release automation swaps them. There was nothing to fix.
+
+The failures that *looked* like this class had two other causes, both since
+fixed: the dry-runs ran against the source subtree rather than the packed
+artifact, and `zed-polyglot.yml` pinned a `zed-interfaces` predating the route
+model, so manifests declaring `tag_format`/`forge` failed to deserialize.
+
+The general lesson matches the `dir = "."` correction above: check what the
+manifest *declares about its own publishing* before calling a dependency shape a
+defect.
 
 ## The Go tag gap is now represented explicitly
 
