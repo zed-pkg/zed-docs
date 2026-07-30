@@ -93,7 +93,6 @@ model, so manifests declaring `tag_format`/`forge` failed to deserialize.
 The general lesson matches the `dir = "."` correction above: check what the
 manifest *declares about its own publishing* before calling a dependency shape a
 defect.
-
 ## The Go tag gap is now represented explicitly
 
 A Go module in a subdirectory is fetched by the tag `<subdir>/vX.Y.Z`. That is
