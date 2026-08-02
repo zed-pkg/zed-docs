@@ -28,6 +28,8 @@ in order. Where a design is already implemented, the doc links to the code.
 | [18](docs/18-multi-registry-release-fanout.md) | Native registry fan-out and target-only forge mirrors | direction set |
 | [19](docs/19-polyglot-publishing-audit.md) | Polyglot publishing: what is actually verified (audit of 18) | verified in CI |
 | [20](docs/20-repository-sync-and-semantic-merging.md) | Repository synchronization and semantic conflict resolution | operational runbook |
+| [21](docs/21-offline-release-plan-review.md) | Deterministic offline release-plan review in a browser | implemented; three-engine + print/a11y verified |
+| [22](docs/22-flags2env-browser-wasm.md) | Real flags2env C parser in browser WebAssembly and workers | implemented; three-engine verified |
 
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
 quotas, which remain planned. Audit logs shipped (`zed org audit`,
@@ -45,3 +47,9 @@ CI, `.github/`, READMEs stripped; licenses kept), verifies a matching VCS tag
 at HEAD, and uploads. `zed install` resolves semver, downloads each artifact
 once into a content-addressed store at `$HOME/.zed-pkg`, verifies its sha256,
 and symlinks it into the project's `zed_modules/` — pnpm-style.
+
+## Governance
+
+This documentation is MIT licensed. See [LICENSE](LICENSE). Report suspected
+security issues using the private-first procedure in [SECURITY.md](SECURITY.md),
+not a public issue containing exploit details or credentials.
