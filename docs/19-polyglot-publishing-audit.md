@@ -75,24 +75,32 @@ their manifests reach outside the slice — `athleto-clients` dart
 `fiducia-clients` rust (a `git =` dependency crates.io forbids). That finding was
 wrong, and the reason is worth keeping.
 
-Every one of those slices is **explicitly opted out of native publishing**:
-`publish_to: none` in the two pubspecs, `publish = false` in the Cargo manifest.
-The parity gate already honors both and reports them as `ok; publish_to: none` /
-`ok; publish = false`. A package that is not going to a native registry may
-legitimately depend on a sibling checkout.
+The retraction holds for the two Dart cases and **overreached on the third**.
 
-athleto's dart manifest in fact already uses the idiomatic shape — hosted
-versions under `dependencies`, paths only under `dependency_overrides`, with a
-comment noting release automation swaps them. There was nothing to fix.
+**Correct.** `scintilla-clients` flutter and `athleto-clients` dart both declare
+`publish_to: none`, the parity gate honors it and reports `ok; publish_to: none`,
+and athleto's manifest already uses the idiomatic shape — hosted versions under
+`dependencies`, paths only under `dependency_overrides`, with a comment noting
+release automation swaps them. There was nothing to fix in either.
 
-The failures that *looked* like this class had two other causes, both since
-fixed: the dry-runs ran against the source subtree rather than the packed
-artifact, and `zed-polyglot.yml` pinned a `zed-interfaces` predating the route
-model, so manifests declaring `tag_format`/`forge` failed to deserialize.
+**Overreached.** Grouping `fiducia-clients` rust into the same retraction was
+wrong, and DEN-709 had it right. `publish = false` explains why the *parity
+script* skips that slice; it does not explain why the crates.io dry-run stopped
+failing, and it says nothing at all about the Go and Java slices in the same
+repo — both of which had real defects (a `replace` pointing at
+`../../../fiducia-interfaces/generated/go`, and Java source that would not
+compile) that this doc never examined before dismissing the class.
 
-The general lesson matches the `dir = "."` correction above: check what the
-manifest *declares about its own publishing* before calling a dependency shape a
-defect.
+Those are now genuinely fixed rather than reclassified: the Go `replace` is gone
+and the target declares `tag_format = "clients/go/v{version}"`; the packed Java
+slice compiles clean (`javac` on JDK 24, and `java -> Maven Central` passes CI);
+Rust is classified out via `publish = false` with no native route, which is one
+of the two resolutions DEN-709 itself proposed. The full matrix is 30/30 green.
+
+Two lessons, not one. The `dir = "."` correction above: check what a manifest
+declares about its own publishing before calling a dependency shape a defect.
+And this one: a retraction is a claim like any other — verifying two of three
+cases and generalizing is the same error as the finding it was retracting.
 
 ## The Go tag gap is now represented explicitly
 
