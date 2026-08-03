@@ -6,6 +6,10 @@ Implementation is under review in
 [`zed-pkg/zed-cli#69`](https://github.com/zed-pkg/zed-cli/pull/69), stacked on
 the frozen planner in
 [`zed-pkg/zed-cli#64`](https://github.com/zed-pkg/zed-cli/pull/64).
+The reusable Nix helper boundary is independently ratcheted in
+[`zed-pkg/zed-cli#73`](https://github.com/zed-pkg/zed-cli/pull/73), stacked
+directly on the foundational fixed-output bridge in
+[`zed-pkg/zed-cli#36`](https://github.com/zed-pkg/zed-cli/pull/36).
 Nothing is shipped merely because it appears in this document.
 
 This document narrows the Zed → Nix half of
@@ -171,6 +175,29 @@ failure and never merge into or partially update an existing bundle.
 An existing destination may be rejected or accepted only after proving it is
 byte-identical. Silent overwrite is forbidden.
 
+## Public Nix library evaluation boundary
+
+The foundational install-shaped bridge exports reusable `fetchZedDeps` and
+`mkZedPackage` helpers before the planner and pure renderer land. Their public
+argument contract must remain executable and independently reviewable.
+
+A flake-level evaluation check therefore:
+
+- instantiates the default helper, an explicit credential-free HTTPS registry,
+  an immutable path-valued registry, and explicit adapter/target routing;
+- instantiates an ordinary `mkZedPackage` consumer and proves caller passthrough
+  metadata and the exact verified dependency derivation remain exposed;
+- rejects simultaneous `registry` and `registryPath` inputs;
+- rejects adapter or target metadata containing `/nix/store/`; and
+- uses a deliberately failing dummy Zed executable so `nix flake check
+  --no-build` cannot silently cross from evaluation into execution.
+
+This check is low-cost and pure. It is not evidence that the fixed-output
+builder ran, that a recursive NAR hash matches, that an offline consumer built,
+or that lock tampering was rejected. Those remain integration-canary duties.
+Likewise, the fixed-output canary does not certify planner or renderer
+reproducibility. Each layer owns one boundary.
+
 ## Nix execution boundary
 
 After persistence, an explicit stage may prepare the already pinned Nixpkgs
@@ -206,15 +233,22 @@ one another.
 The implementation PR must use read-only CI with commit-pinned actions and no
 branch-push or publication step.
 
-Pure tests cover byte-identical repeated rendering, sorted unique inventory,
-exact lock-byte preservation, data and prebuilt-bin package classes, canonical
-JSON, escaping, no host or credential leakage, and inventory revalidation.
+The public helper layer first runs `nix flake check --no-build` on Linux and
+macOS. It covers accepted argument forms, passthrough wiring, and fail-closed
+assertions without executing Zed. The same workflow must then run the real
+fixed-output canary so an evaluation-only success cannot mask a sandbox,
+recursive-hash, retained-reference, offline-build, or tamper failure.
 
-Negative tests cover artifact hash/size drift, unsupported formats, dependency
-or source-build plans, outputs other than exactly `out`, unsorted declarations,
-unsafe identities and paths, traversal, links, special entries, archive limits,
-missing or non-executable bins, mutable or malformed locks, unknown schemas,
-and post-render tampering.
+Pure renderer tests cover byte-identical repeated rendering, sorted unique
+inventory, exact lock-byte preservation, data and prebuilt-bin package classes,
+canonical JSON, escaping, no host or credential leakage, and inventory
+revalidation.
+
+Negative renderer tests cover artifact hash/size drift, unsupported formats,
+dependency or source-build plans, outputs other than exactly `out`, unsorted
+declarations, unsafe identities and paths, traversal, links, special entries,
+archive limits, missing or non-executable bins, mutable or malformed locks,
+unknown schemas, and post-render tampering.
 
 Linux and macOS canaries render into temporary directories, prepare only the
 pinned input, then run locked offline `nix flake check` and `nix build`. An
@@ -224,16 +258,20 @@ outside the implementation repository.
 ## Merge order
 
 1. Canonical shared adapter and manifest/lock types.
-2. Frozen resolver and fixed-output foundations.
-3. Canonical export-plan schema and read-only planner.
-4. Pure deterministic renderer.
-5. Atomic persistence and existing-bundle verification.
-6. Explicit realization and final adapter evidence.
-7. Independent clean-room certification.
-8. Reviewed overlay/index and signed-cache publication.
+2. Foundational install-shaped fixed-output bridge.
+3. Pure public-helper evaluation ratchet, kept orthogonal to the export stack.
+4. Resolver-only frozen fetch and fixed-output artifact-bundle foundations.
+5. Canonical export-plan schema and read-only planner.
+6. Pure deterministic renderer.
+7. Atomic persistence and existing-bundle verification.
+8. Explicit realization and final adapter evidence.
+9. Independent clean-room certification.
+10. Reviewed overlay/index and signed-cache publication.
 
 A passing child cannot compensate for a failing parent. When a parent moves,
 stacked children are semantically synchronized and their exact-head gates rerun.
+A test-only sibling should be retargeted after its parent lands instead of being
+folded into an unrelated feature child merely to linearize the graph.
 
 ## Definition of done
 
