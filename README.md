@@ -34,6 +34,11 @@ in order. Where a design is already implemented, the doc links to the code.
 | [24](docs/24-recursive-installs-and-artifact-locking.md) | Recursive dependency graphs, five-worker prefetch, and per-artifact locks | implemented; external E2E certified |
 | [25](docs/25-complete-constraint-solving.md) | Complete one-version solving for overlapping transitive ranges | design + implementation tracker |
 
+Independent executable acceptance contracts that do not consume architecture
+numbers are indexed separately. The first is the
+[`zed develop` clean-room acceptance contract](docs/zed-develop-clean-room-acceptance.md),
+which is already on `main` and remains deliberately unnumbered.
+
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
 quotas, which remain planned. Audit logs shipped (`zed org audit`,
 `GET /v1/orgs/{org}/audit`); the quota that exists today is the org-claim
