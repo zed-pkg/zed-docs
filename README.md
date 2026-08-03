@@ -32,6 +32,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [22](docs/22-flags2env-browser-wasm.md) | Real flags2env C parser in browser WebAssembly and workers | implemented; three-engine verified |
 | [23](docs/23-nix-zed-interop.md) | Nix–Zed interoperability through sealed, immutable adapter records | proposal; implementation staged |
 | [24](docs/24-recursive-installs-and-artifact-locking.md) | Recursive dependency graphs, five-worker prefetch, and per-artifact locks | implementation + E2E in review |
+| [25](docs/25-complete-constraint-solving.md) | Complete one-version solving for overlapping transitive ranges | design + implementation tracker |
 
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
 quotas, which remain planned. Audit logs shipped (`zed org audit`,
