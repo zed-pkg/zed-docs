@@ -67,9 +67,9 @@ The acceptance workflow is deliberately separate from `zed-cli`:
 The initial certification pins:
 
 ```text
-zed-cli       7e5ac1897a872223f8316ef1c3342a2fa1982504
+zed-cli        7e5ac1897a872223f8316ef1c3342a2fa1982504
 zed-interfaces dc0e0a0620b9462817950b552d3d334a184b1cb1
-flags-2-env   2f62e40932a0fcb8b9bf1b4c84473e34fa3c51c7
+flags-2-env    2f62e40932a0fcb8b9bf1b4c84473e34fa3c51c7
 ```
 
 Those values are evidence inputs, not floating branch names. A future candidate
@@ -234,6 +234,17 @@ Each operating-system job records:
 - managed environment key names; and
 - completed assertion names.
 
+Ten policy tests ratchet the workflow itself. They reject mutable Action refs,
+write or OIDC permissions, secret inheritance, persisted checkout credentials,
+floating dependency pins, weakened OS or timeout coverage, unsafe artifact
+retention, missing canaries, removal of the source-cleanliness proof, and any
+bytecode-producing validation followed by cleanup-based masking.
+
+That final invariant caught a real review-time defect: Python's ordinary import
+cache created `tests/cli/__pycache__/`. The accepted repair prevents the write
+with `PYTHONDONTWRITEBYTECODE=1` and in-memory `compile(...)`; it does not delete,
+ignore, or reset the evidence after the fact.
+
 Evidence retention is short and diagnostic. It is not a credential or user-home
 backup mechanism.
 
@@ -252,6 +263,38 @@ A change to a public invariant in this document requires all of the following:
 A green repository-local suite is necessary but not sufficient for changing the
 external contract. The independent test must continue to exercise the public
 binary from a clean checkout.
+
+## Initial reviewed evidence
+
+The initial external contract was reviewed at E2E head
+`24bc0b60910727f7ecb1da1cb53d1683a2de80c4`.
+
+- [Clean-room run 30837794664](https://github.com/zed-pkg/zed-e2e/actions/runs/30837794664)
+  passed on Ubuntu 24.04 and macOS 15. Both jobs passed the ten policy tests, the
+  immutable CLI build, the functional suite, the source-cleanliness proof, and
+  non-secret evidence upload.
+- [Existing full-stack run 30837796445](https://github.com/zed-pkg/zed-e2e/actions/runs/30837796445)
+  passed Playwright, Puppeteer, Selenium, the CLI/API/web stack, and the
+  process-memory artifact boundary.
+- [Agents-policy run 30837797718](https://github.com/zed-pkg/zed-e2e/actions/runs/30837797718)
+  passed.
+
+The Linux report records 18 assertions across Bash, Zsh, and Fish, with managed
+environment digest
+`35ac6394a7c0e8e441814ed47f2365b78e517cd502121daa974dd556fa954478`.
+The macOS report records 17 assertions across Bash and Zsh, with managed
+environment digest
+`49b869cd80feb3bb574cc53c2e6f61e873d5f5dfac0b25ee0cf93b7c134b05e1`.
+Both reports record `credential_canaries_retained = false` and
+`external_registry_required = false`.
+
+The downloaded artifact archives were scanned directly for every fake
+credential-canary value; none was present. Their archive digests are:
+
+```text
+Linux sha256:871ce6e084acfb90c165d4d84ba4b6ea8f990ce28f0423fea0d811bd23bca0c6
+macOS sha256:3848a15788f98391059151203b9dd8dbb60eef933f7ee5b58355474dff113d83
+```
 
 ## Documentation indexing note
 
