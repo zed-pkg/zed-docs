@@ -13,7 +13,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [3](docs/03-version-normalization.md) | Polyglot version strings (git/hg tags, commits) | implemented |
 | [4](docs/04-lockfile-and-tag-immutability.md) | Lockfile vs mutable tags/branches | implemented |
 | [5](docs/05-source-vs-build-cache.md) | Source caching vs build caching | implemented |
-| [6](docs/06-process-locking.md) | Process-level locking for concurrent CLIs | implementation update in review |
+| [6](docs/06-process-locking.md) | Process-level locking for concurrent CLIs | implemented; blocking OS locks + process regressions |
 | [7](docs/07-enterprise-scale.md) | From concept to enterprise-grade | implemented* |
 | [8](docs/08-fast-rust-ci.md) | Fast Rust CI (<3 min) | implemented |
 | [9](docs/09-cross-platform-distribution.md) | Multi-OS / multi-arch CLI distribution | implemented |
@@ -31,7 +31,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [21](docs/21-offline-release-plan-review.md) | Deterministic offline release-plan review in a browser | implemented; three-engine + print/a11y verified |
 | [22](docs/22-flags2env-browser-wasm.md) | Real flags2env C parser in browser WebAssembly and workers | implemented; three-engine verified |
 | [23](docs/23-nix-zed-interop.md) | Nix–Zed interoperability through sealed, immutable adapter records | proposal; implementation staged |
-| [24](docs/24-recursive-installs-and-artifact-locking.md) | Recursive dependency graphs, five-worker prefetch, and per-artifact locks | implementation + E2E in review |
+| [24](docs/24-recursive-installs-and-artifact-locking.md) | Recursive dependency graphs, five-worker prefetch, and per-artifact locks | implemented; external E2E certified |
 | [25](docs/25-complete-constraint-solving.md) | Complete one-version solving for overlapping transitive ranges | design + implementation tracker |
 
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
