@@ -30,6 +30,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [20](docs/20-repository-sync-and-semantic-merging.md) | Repository synchronization and semantic conflict resolution | operational runbook |
 | [21](docs/21-offline-release-plan-review.md) | Deterministic offline release-plan review in a browser | implemented; three-engine + print/a11y verified |
 | [22](docs/22-flags2env-browser-wasm.md) | Real flags2env C parser in browser WebAssembly and workers | implemented; three-engine verified |
+| [23](docs/23-universal-environment-interop.md) | Flox, Devbox, mise/asdf, and scratch OCI interoperability | RFC; implementation staged |
 
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
 quotas, which remain planned. Audit logs shipped (`zed org audit`,
