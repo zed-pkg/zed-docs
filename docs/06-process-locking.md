@@ -74,18 +74,24 @@ On Unix, project packages remain symlinks into the global store by default.
 Copy mode remains explicit for Docker/OCI and is the non-Unix fallback. Process
 locking is not a reason to copy package trees into every project.
 
-## Implementation and review stack
+## Implementation provenance
 
 - Core recursive graph resolution, five-worker queue, unified artifact
-  acquisition, and tests:
+  acquisition, and tests originated in
   [`zed-pkg/zed-cli#53`](https://github.com/zed-pkg/zed-cli/pull/53).
-- True parent/child artifact-lock tests and a permanent Windows workflow:
-  [`zed-pkg/zed-cli#65`](https://github.com/zed-pkg/zed-cli/pull/65).
-- Removal of the remaining polling store locks, plus orderly-release and
-  forced-owner-exit regressions:
+- True parent/child artifact-lock tests and the permanent Windows workflow were
+  reviewed in [`zed-pkg/zed-cli#65`](https://github.com/zed-pkg/zed-cli/pull/65).
+- Kernel-blocking lower-level store/install/build locks plus orderly-release and
+  forced-owner-exit regressions were reviewed in
   [`zed-pkg/zed-cli#67`](https://github.com/zed-pkg/zed-cli/pull/67).
-- Immutable multi-process E2E certification:
+- The composed recursive, recovery, workspace, uninstall, Linux, and Windows
+  certification merged through
   [`zed-pkg-test/zed-pkg-e2e#14`](https://github.com/zed-pkg-test/zed-pkg-e2e/pull/14).
+
+The #65 and #67 branch heads were later verified as ancestors of current
+`zed-cli/main` and their stale stacked PRs were closed without replaying commits.
+The implementation and regression behavior described here are therefore landed,
+not merely proposed by those historical PR pages.
 
 See also [24 — recursive installs and artifact locking](24-recursive-installs-and-artifact-locking.md).
 
@@ -106,6 +112,6 @@ The permanent suites prove that:
 
 ## Status
 
-The descriptor-backed blocking implementation and expanded regression suite are
-in the review stack linked above. This document replaces the older polling,
-backoff, jitter, and timeout design.
+Implemented and externally certified. This document replaces the older polling,
+backoff, jitter, stale-lock, and timeout design with descriptor-backed blocking
+operating-system locks.
