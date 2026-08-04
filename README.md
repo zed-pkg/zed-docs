@@ -34,6 +34,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [24](docs/24-recursive-installs-and-artifact-locking.md) | Recursive dependency graphs, five-worker prefetch, and per-artifact locks | implemented; external E2E certified |
 | [25](docs/25-complete-constraint-solving.md) | Complete one-version solving for overlapping transitive ranges | design + implementation tracker |
 | [26](docs/26-deterministic-nix-export-bundles.md) | Pure deterministic Zed → Nix flake-bundle rendering contract | implementation under review |
+| [27](docs/27-durable-first-install-manifests.md) | Durable `.zpkg.toml` creation on first dependency install | implemented; Node + Go/Python/Rust certified on Linux/macOS |
 
 Independent executable acceptance contracts that do not consume architecture
 numbers are indexed separately. The first is the
