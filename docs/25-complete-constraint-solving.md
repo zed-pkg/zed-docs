@@ -1,140 +1,232 @@
 # 25. Complete one-version constraint solving
 
-**Issue:** the recursive installer intentionally selects one version per
-`org/name`. A first-match traversal is not sufficient for that policy: a broad
-requirement can select a newer version before a later, narrower but compatible
-requirement is discovered.
+**Linear:** [DEN-1553](https://linear.app/denman/issue/DEN-1553/zed-cli-solve-overlapping-compatible-transitive-constraints-before)  
+**Product:** [`zed-pkg/zed-cli#89`](https://github.com/zed-pkg/zed-cli/pull/89), merged as
+`4cb2018b42c0f80086920185d92d6460be675804`  
+**Validated product head:** `ddf0487f560c19000e2844b62797f1cd6299c26e`  
+**Independent certification:** [`zed-pkg-test/zed-pkg-e2e#36`](https://github.com/zed-pkg-test/zed-pkg-e2e/pull/36), merged as
+`ed257d21abf257561bf8e7ada83debb09c80b8b0`  
+**Validated certification head:** `56327079db97eeb51a425c15266ace9268f81f1c`
 
-Implementation tracker: [DEN-1553](https://linear.app/denman/issue/DEN-1553/zed-cli-solve-overlapping-compatible-transitive-constraints-before).
+The recursive installer selects one version per `org/name`. A first-match walk
+cannot implement that policy correctly: a broad requirement may encounter a
+newer version before a later, narrower but compatible path is discovered. Zed
+now solves the complete active graph before publishing a project lockfile,
+adapter state, staging directory, or materialized dependency.
 
 ## The false-conflict case
 
-Consider this graph:
-
 ```text
-root
+consumer
 ├── left@1.0.0  -> shared ^1
 └── right@1.0.0 -> shared <=1.5.0
 
 published shared versions: 1.5.0, 1.9.0
 ```
 
-If `left` is expanded first, a greedy resolver selects `shared@1.9.0`. Rejecting
-`right` afterward would be incorrect: `shared@1.5.0` satisfies both paths.
-Dependency declaration order and network completion order must not decide
-whether the graph is considered solvable.
+`shared@1.9.0` satisfies the left path but not the right path.
+`shared@1.5.0` satisfies both. Root declaration order, package-coordinate
+lexical order, artifact response timing, and worker completion timing must not
+change whether the graph is solvable or which stable solution is selected.
 
-## Why simple range intersection is not enough
+The independently certified cold result for this graph is:
 
-The requirements contributed by a package are version-dependent and live in
-the selected artifact's `.zpkg.toml`. Downgrading one package can therefore:
+```text
+resolved=3 workers=5 downloaded=3
+```
 
-- remove dependencies contributed only by the old version;
+The three acquired artifacts are the two roots and selected `shared@1.5.0`.
+The rejected `shared@1.9.0` archive is not speculatively downloaded before the
+unresolved sibling root contributes `shared <=1.5.0`. Reversing the two root
+dependencies produces the same lockfile and the same summary.
+
+## Why range intersection alone is insufficient
+
+Requirements contributed by a package are version-dependent and live in that
+exact immutable artifact's `.zpkg.toml`. Replacing one candidate can:
+
+- remove dependencies contributed only by the rejected version;
 - add different dependencies from the replacement version;
-- tighten or loosen constraints on other packages;
-- require a later decision to be reconsidered.
+- tighten or loosen requirements on other coordinates;
+- create or remove a cycle; and
+- force a decision on another coordinate to be reconsidered.
 
-A monotonic “keep every constraint ever observed” algorithm is incorrect
-because it retains stale constraints from versions no longer selected. A loop
-that repeatedly chooses the current maximum can also oscillate. The solver must
-model candidate decisions and backtrack deterministically when a branch cannot
-produce one complete graph.
+A monotonic algorithm that retains every observed constraint is incorrect
+because rejected candidates leave stale requirements behind. Repeatedly picking
+the current maximum is also incomplete: a valid solution may require
+backtracking across more than one coordinate.
 
-## Required solver boundary
+## Shipped deterministic model
 
-The graph solver owns:
+For every coordinate, the solver retains each active requirement together with
+its root-to-package provenance path. Candidate versions are considered in
+canonical descending order for the package's declared version scheme.
 
-- root and transitive requirement provenance;
-- one candidate domain per package coordinate;
-- deterministic candidate ordering;
-- candidate manifest loading;
-- addition and removal of version-specific dependency constraints;
-- cycle handling and memoized failed states;
-- a complete selected graph or a deterministic unsatisfiable explanation.
+For each branch of the search:
 
-The artifact layer continues to own:
+1. select the next unresolved coordinate deterministically;
+2. obtain the exact candidate metadata and manifest through the established
+   resolver and immutable artifact path;
+3. clone the branch state before adding the candidate's dependencies;
+4. propagate new requirements, including newly discovered paths through
+   packages that were already selected;
+5. reject the branch when any selected version no longer satisfies every active
+   requirement; and
+6. discard the complete rejected branch state before trying the next candidate.
 
-- the five-worker bounded queue;
+Constraints and dependencies contributed only by a rejected version therefore
+cannot leak into the final graph. Backtracking may cross several coordinates.
+A cycle-closing edge remains an active requirement but its provenance path is
+terminal, preventing infinite growth of equivalent paths.
+
+A successful solve produces one exact selected graph. Normal installation and
+prefetch consume that graph rather than running separate greedy traversals.
+
+## Version-scheme semantics
+
+Requirement matching follows the package's declared scheme:
+
+- semver packages use normalized semver ranges;
+- calver packages use normalized calendar-version ranges;
+- opaque versions are exact identifiers; and
+- workspace members use the same scheme-aware matcher as registry candidates.
+
+An opaque identifier such as `legacy-api` cannot match `^1` merely because the
+requirement resembles semver syntax. This compatibility boundary is a permanent
+product regression test.
+
+## Yanked-version policy
+
+Fresh solving reads immutable version metadata before submitting an artifact to
+the acquisition pool. A yanked candidate may be cached as unavailable for a
+deterministic diagnostic, but its archive must not enter a fresh cache or store.
+When all otherwise matching candidates are yanked, the error points to
+lock-authoritative replay:
+
+```bash
+zed install --frozen
+```
+
+An existing exact lock remains authoritative after a selected version is later
+yanked. Frozen replay may acquire and install that exact locked artifact; fresh
+resolution may not select it.
+
+## Shallowest provenance waves and bounded acquisition
+
+Completeness must not destroy the existing five-worker acquisition contract.
+The solver therefore batches one highest currently viable candidate for every
+coordinate in the **shallowest active provenance wave** before waiting.
+
+This ordering has two purposes:
+
+- unresolved parents at the same depth can use the bounded worker pool in
+  parallel; and
+- deeper transitive coordinates wait until every still-unresolved shallower
+  parent has had a chance to contribute its requirements.
+
+In the overlap reproducer, both root packages are selected before the shared
+coordinate is acquired. The right path's `<=1.5.0` requirement is therefore
+active when the shared candidate is chosen, and `1.9.0` never enters either cold
+home. In a wide independent frontier, equal-depth candidates still reach the
+five-worker bound. A warm replay downloads zero artifacts.
+
+Backtracking may acquire a non-yanked candidate required by an active search
+branch and later reject that branch. The immutable artifact may remain reusable
+in the global store, but it must never appear in the final `.zpkg.lock` or the
+consumer project. Yanked candidates have the stricter pre-acquisition rule
+above.
+
+## Artifact and project-transaction boundaries
+
+The complete solver does not introduce another downloader or lock protocol.
+The established artifact layer continues to own:
+
+- the bounded `FetchPool`;
+- deterministic result consumption;
 - per-SHA descriptor-backed operating-system locks;
-- verified temporary downloads and atomic cache publication;
-- temporary extraction and atomic content-addressed-store publication.
+- verified temporary downloads;
+- atomic cache publication;
+- temporary extraction; and
+- atomic content-addressed-store publication.
 
-The project transaction continues to own lockfile publication, adapters, hooks,
-references, rollback, and symlink/copy materialization.
+The project transaction continues to own:
 
-## Deterministic search model
+- `.zpkg.lock` publication;
+- adapters and language wiring;
+- staging and rollback;
+- hooks and references; and
+- symlink/copy materialization.
 
-A suitable implementation is a depth-first constraint solver with stable
-ordering:
+Exact solver selections are exposed only to the root consumer install through a
+scoped, panic-safe context. Immutable package manifests loaded from the store
+remain unchanged.
 
-1. Seed the active requirements from the consumer and workspace members.
-2. Choose the unresolved package with the smallest remaining candidate domain;
-   break ties lexically by `org/name`.
-3. Order non-yanked candidates newest first using the package's version scheme.
-4. For each candidate:
-   - acquire or reuse its verified manifest;
-   - push the candidate decision;
-   - add dependency requirements with full provenance;
-   - remove those contributions automatically when backtracking;
-   - propagate domains until either every selected version satisfies every
-     active requirement or one domain becomes empty.
-5. Memoize failed canonical states so cycles and repeated subgraphs terminate.
-6. Return the first solution under the stable ordering, or an unsatisfiable
-   explanation assembled from the empty domain's active requirement paths.
+## Frozen installation
 
-Candidate artifact acquisition may be cached across branches. Downloading a
-candidate that is later rejected is acceptable because the content-addressed
-store is immutable and reusable; project materialization still contains only
-the final selected graph.
+Frozen installation deliberately skips solving. The committed lock graph is the
+authority:
 
-## One resolver, two install modes
+1. parse and validate the existing lockfile;
+2. verify package identity and immutable hashes;
+3. acquire the exact locked artifacts;
+4. preserve lockfile bytes; and
+5. materialize the exact graph.
 
-Normal install and recursive prefetch must consume the same solved graph. They
-must not independently re-run two greedy traversals.
+A newly published version, a changed registry `latest` value, or a later yank
+must not silently rewrite or re-solve a frozen graph.
 
-A non-frozen flow should:
+## Deterministic diagnostics
 
-1. solve the graph once;
-2. acquire the selected artifacts through the bounded queue;
-3. hand the exact selected graph to the existing project transaction;
-4. write that graph to `.zpkg.lock` during transaction commit.
-
-A frozen flow should parse and verify the existing lock graph, acquire those
-exact hashes, and skip solving entirely.
-
-## Required diagnostics
-
-When no solution exists, report:
-
-- the package coordinate whose candidate domain became empty;
-- every active requirement, with its originating root or dependency path;
-- the candidates considered and why each was excluded;
-- whether a candidate was yanked, missing, identity-mismatched, or outside a
-  version requirement.
-
-The output order follows stable package and provenance order, never worker
+When no solution exists, the diagnostic identifies the conflicting coordinate
+and every active incompatible requirement with its complete provenance path.
+The order follows stable coordinate and provenance ordering, never worker
 completion order.
 
-## Required regression matrix
+The independent canary runs an unsatisfiable graph twice with reversed root
+declaration order and requires byte-identical normalized output. Failure occurs
+before `.zpkg.lock`, `zed_modules`, adapter state, or transaction staging is
+published.
 
-1. The `^1` plus `<=1.5.0` reproducer selects `1.5.0` in either declaration
-   order.
-2. Reversing artifact response timing does not change the graph or diagnostic.
-3. Downgrading a candidate removes dependencies contributed only by the old
-   version.
-4. A two-coordinate graph requiring real backtracking resolves successfully.
-5. An unsatisfiable graph reports every conflicting provenance path.
-6. Cycles terminate and repeated states are memoized.
-7. Diamond graphs still select and acquire one shared package.
-8. Frozen replay uses exact lock entries and never invokes the solver.
-9. The selected graph is identical between prefetch and transactional install.
-10. Final acquisition still peaks at five workers and deduplicates every SHA
-    across independent processes.
+## Certified regression matrix
+
+The permanent product and black-box suites cover:
+
+1. `^1` plus `<=1.5.0` selecting `1.5.0` under either declaration order;
+2. exactly three selected downloads for the canonical overlap cold solve;
+3. equal-depth cold breadth reaching five workers;
+4. warm replay downloading zero artifacts;
+5. multi-coordinate deterministic backtracking;
+6. removal of dependencies contributed only by a rejected candidate;
+7. deterministic complete provenance for an unsatisfiable graph;
+8. diamond and cycle termination with one selected version per coordinate;
+9. opaque exact-only matching;
+10. fresh yank rejection before archive acquisition;
+11. exact frozen replay after the locked version is yanked;
+12. identical selected graph ownership between preparation and transactional
+    install;
+13. per-SHA interprocess acquisition locking, including Windows regressions;
+14. manifestless, durable-manifest, OCI, Nix, and development-shell
+    compatibility; and
+15. browser-visible fixture behavior through the pinned registry stack.
+
+## Merge evidence
+
+The exact product head passed all 14 `zed-cli` workflows before merge. Coverage
+included ordinary CI and Clippy, recursive Linux and Windows locking,
+frozen-lock integrity, durable and manifestless installation, polyglot and OCI
+contracts, Nix interoperability, development-shell behavior, formal
+methods/review, repository hardening, and agents policy.
+
+The exact certification head passed all eight `zed-pkg-e2e` workflows before it
+merged first: complete solver, full fixture lifecycle, fixture boundaries,
+recursive graph, recursive stress, browser E2E, mise runtime, and lifecycle
+source-map validation. The product merged only after that independent
+certification, and both merges used exact expected-head SHA guards.
 
 ## Status
 
-The recursive acquisition, locking, publication, and symlink contracts are in
-review in `zed-cli` PRs 53, 65, 67, and 68. Complete constraint solving is a
-separate correctness follow-up tracked by DEN-1553; until it lands, overlapping
-ranges should not be described as fully solved merely because each individual
-requirement is valid.
+Implemented and independently certified. The former overlapping-compatible-range
+limitation described by docs 24 and 25 is closed by DEN-1553. Future changes to
+candidate ordering, version matching, yank handling, graph preparation, or
+artifact prefetch must preserve the regression matrix above rather than merely
+passing a focused unit test.
