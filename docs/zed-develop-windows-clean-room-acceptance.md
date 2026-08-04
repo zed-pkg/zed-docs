@@ -1,11 +1,12 @@
 # Windows clean-room acceptance for `zed develop`
 
-**Status:** CLI implementation merged; independent consumer certification in final review.  
+**Status:** certified and merged.  
 **Linear implementation corrections:** [DEN-1616](https://linear.app/denman/issue/DEN-1616/zed-cli-suppress-powershell-profiles-in-zed-develop-command-mode) and [DEN-1634](https://linear.app/denman/issue/DEN-1634/zed-cli-normalize-windows-child-process-cwd-for-verbatim-project-paths).  
 **Linear external certification:** [DEN-1614](https://linear.app/denman/issue/DEN-1614/zed-e2e-add-windows-clean-room-certification-for-zed-develop).  
 **Linear contract:** [zed develop Windows clean-room acceptance contract](https://linear.app/denman/document/zed-develop-windows-clean-room-acceptance-contract-316cfafd9902).  
 **Merged CLI PR:** [`zed-pkg/zed-cli#100`](https://github.com/zed-pkg/zed-cli/pull/100).  
-**E2E PR:** [`zed-pkg/zed-e2e#16`](https://github.com/zed-pkg/zed-e2e/pull/16).
+**Merged E2E PR:** [`zed-pkg/zed-e2e#16`](https://github.com/zed-pkg/zed-e2e/pull/16).  
+**Merged release canary:** [`zed-pkg-test/zed-pkg-e2e#43`](https://github.com/zed-pkg-test/zed-pkg-e2e/pull/43).
 
 The completed [Unix clean-room contract](zed-develop-clean-room-acceptance.md)
 certifies `zed develop` on Ubuntu and macOS. This document adds the Windows
@@ -18,18 +19,25 @@ request.
 
 ## Immutable reviewed stack
 
-The consumer workflow pins the merged CLI implementation rather than a branch:
+The certification used these immutable commits:
 
 ```text
-zed-cli        fd3b3e487b2bdd129dd67403ad51f7299cfe6828
-zed-interfaces c2e049006453c26ca8ca291783f681fce75cb01f
-flags-2-env    2f62e40932a0fcb8b9bf1b4c84473e34fa3c51c7
+zed-cli merge   fd3b3e487b2bdd129dd67403ad51f7299cfe6828
+zed-e2e source  144d17e28afa9586bc71ec43f340a0e0328a54b4
+zed-e2e merge   6807fce462b46c421def6b06c5b4050ae9ddf436
+zed-interfaces  c2e049006453c26ca8ca291783f681fce75cb01f
+flags-2-env     2f62e40932a0fcb8b9bf1b4c84473e34fa3c51c7
+release canary  72228839933efc933b91d28f3b44bf473458dfac
 ```
 
 The CLI merge commit preserves the failure-atomic Git-submodule takeover work
 that landed independently on `main` while adding the disjoint Windows shell and
-child-process corrections. A later source change requires a new explicit pin
-and complete replay; a moving branch name is not evidence.
+child-process corrections. The release canary retains the reviewed E2E source
+SHA as provenance: PR #16 merged that exact source without code conflicts, and
+the merge commit records its incorporation into `main`.
+
+A later source change requires a new explicit pin and complete replay; a moving
+branch name is not evidence.
 
 ## PowerShell command mode
 
@@ -110,8 +118,8 @@ cmd.exe /D /S /C <command>
 `/D` disables AutoRun commands, `/S` applies cmd.exe command-string parsing, and
 `/C` executes the command and exits.
 
-The independent harness uses two fixed-name batch files in the runner-temporary
-child cwd:
+The independent harness discovers the nearest manifest-owning project root and
+creates two fixed-name batch files there:
 
 1. `zed-develop-cmd-contract.cmd` performs one native statement per managed-env,
    cwd, and exit-code assertion;
@@ -121,8 +129,9 @@ child cwd:
 Zed executes `call zed-develop-cmd-launcher.cmd`. Relative fixed names avoid an
 incidental inner absolute-path quoting layer under `/S /C`; the test still
 exercises Zed's real shell arguments, selected cwd, environment delivery, and
-child status propagation. A static policy test rejects reintroducing quoted
-absolute batch invocation.
+child status propagation. The static policy rejects nested-caller placement,
+standalone quoted batch invocation, quoted absolute `CALL`, and loss of explicit
+`ERRORLEVEL` propagation.
 
 ## Managed environment contract
 
@@ -188,16 +197,53 @@ The independent workflow must remain:
 - limited to runner-temporary evidence retained for no more than seven days; and
 - followed by a direct scan of retained evidence for every fake canary.
 
-The static policy suite also ratchets the PowerShell/cmd/profile/venv assertions,
-relative cmd launcher, explicit `ERRORLEVEL` capture, and locked source build.
+The static policy suite contains 11 checks and ratchets the PowerShell/cmd/profile/
+venv assertions, project-root relative cmd launcher, explicit `ERRORLEVEL`
+capture, immutable source pins, and locked source build.
 
-## Evidence status
+## Certified evidence
 
-CLI PR #100 merged as `fd3b3e487b2bdd129dd67403ad51f7299cfe6828`.
-The exact final E2E head, Windows workflow and repository-wide run IDs,
-assertion count, managed-environment digest, evidence archive digest, canary
-scan, and E2E/docs merge commits will be recorded here before certification is
-marked complete.
+Cross-organization run
+[30903855437](https://github.com/zed-pkg-test/zed-pkg-e2e/actions/runs/30903855437)
+checked out reviewed E2E source `144d17e28afa9586bc71ec43f340a0e0328a54b4`
+and merged CLI `fd3b3e487b2bdd129dd67403ad51f7299cfe6828` on
+Windows Server 2022. It:
+
+- passed all 11 imported workflow-policy tests;
+- built the real CLI with the committed Cargo lock;
+- passed 19 native Windows assertions;
+- scanned every retained file for all 11 fake credential canaries;
+- proved the canary, E2E, CLI, and interface checkouts remained clean; and
+- uploaded exactly two bounded evidence files.
+
+The retained report records:
+
+```text
+assertion_count=19
+managed_environment_sha256=24903e36d446a5dbe15018a7ced801fbbb164ab7ca26149930b58fecfc4d9525
+credential_canaries_retained=false
+external_registry_required=false
+temporary_home_retained=false
+```
+
+Artifact `windows-develop-cross-org-30903855437-1` has ID `8890260522`, size
+`1563` bytes, and ZIP digest:
+
+```text
+sha256:f253e73fe7a3a6c2062b818ce6d45db6b8de9ee5b29fe7c996ddc9631bbaa2dd
+```
+
+The archive was downloaded and independently scanned again; no fake credential
+canary was present.
+
+The implementation, primary consumer contract, and durable release canary merged
+as:
+
+```text
+zed-cli PR #100      fd3b3e487b2bdd129dd67403ad51f7299cfe6828
+zed-e2e PR #16       6807fce462b46c421def6b06c5b4050ae9ddf436
+zed-pkg-e2e PR #43   72228839933efc933b91d28f3b44bf473458dfac
+```
 
 ## Change control
 
