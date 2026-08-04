@@ -61,6 +61,10 @@ and symlinks it into the project's `zed_modules/` — pnpm-style.
 
 ## Governance
 
+Organization contribution and review rules are in [CONTRIBUTING.md](CONTRIBUTING.md).
+In particular, a pull request may not be closed as superseded until its successor
+incorporates and traces at least one substantive item from every predecessor.
+
 This documentation is MIT licensed. See [LICENSE](LICENSE). Report suspected
 security issues using the private-first procedure in [SECURITY.md](SECURITY.md),
 not a public issue containing exploit details or credentials.

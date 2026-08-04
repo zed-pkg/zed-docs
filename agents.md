@@ -20,6 +20,7 @@ This repository is the durable architecture, operations, contract, and contribut
 - Preserve migration, rollback, failure-mode, and security context when simplifying operational documentation.
 - Never commit tokens, private URLs, kubeconfigs, customer data, screenshots containing secrets, or production environment files.
 - Run markdown, link, spelling, schema/example, and site-build checks already defined by the repository.
+- Before closing a pull request as superseded, outmoded, obsolete, replaced, or duplicated by a successor, incorporate at least one substantive item from that pull request into the successor. Apply this once per predecessor and record the predecessor, salvaged item, and incorporation location in the successor body and predecessor closing comment, following `CONTRIBUTING.md`.
 
 ## Validation
 
