@@ -154,6 +154,36 @@ accommodates:
   version `0.1.0` plus a rockspec revision, and naive comparison reports drift
   that is not there.
 
+## The registry does not know what language a package is
+
+Every check described so far runs against artifacts on disk or a `file://`
+registry. Driving the *live* registry in a browser
+(`zed-e2e/suites/{playwright,puppeteer}/web-polyglot.*`) surfaces the gap none
+of them could: one publish of a four-language repository leaves five navigable
+packages, and **nothing in the API or the UI says which language any of them
+is**.
+
+`package.language` and `package.ecosystem` are declared in the manifest and
+enforced by the install guard, but they stop at the artifact. They are absent
+from the registry DTOs (`PackageMetadata`, `PackageSummary`) and from the
+package page. Two consequences:
+
+- Browsing the registry, `acme-clients-java` is indistinguishable from any
+  unrelated package. The `-java` suffix is a naming convention the registry
+  does not understand, and a target that overrode `name` has no suffix at all.
+- The language guard can only refuse a mismatched install *after* the artifact
+  is downloaded and its manifest read. The registry could have refused it up
+  front.
+
+The browser suite asserts what the UI does expose — separate pages per
+language, distinct `sha256` per slice, lockstep versions, and that the polyglot
+source name deliberately does not resolve. Language identity is the piece it
+cannot assert, because there is nothing to assert against.
+
+Promoting `language`/`ecosystem` into the registry contract is the natural next
+step after typed native routes: the same declaration that decides where a slice
+publishes should also be what the registry advertises.
+
 ## Status
 
 Verified in CI across nine client repositories and one fixture. Typed native
