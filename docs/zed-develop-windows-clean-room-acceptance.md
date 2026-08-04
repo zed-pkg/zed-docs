@@ -1,10 +1,10 @@
 # Windows clean-room acceptance for `zed develop`
 
-**Status:** implementation and independent certification in review.  
-**Linear implementation correction:** [DEN-1616](https://linear.app/denman/issue/DEN-1616/zed-cli-suppress-powershell-profiles-in-zed-develop-command-mode).  
+**Status:** CLI implementation merged; independent consumer certification in final review.  
+**Linear implementation corrections:** [DEN-1616](https://linear.app/denman/issue/DEN-1616/zed-cli-suppress-powershell-profiles-in-zed-develop-command-mode) and [DEN-1634](https://linear.app/denman/issue/DEN-1634/zed-cli-normalize-windows-child-process-cwd-for-verbatim-project-paths).  
 **Linear external certification:** [DEN-1614](https://linear.app/denman/issue/DEN-1614/zed-e2e-add-windows-clean-room-certification-for-zed-develop).  
 **Linear contract:** [zed develop Windows clean-room acceptance contract](https://linear.app/denman/document/zed-develop-windows-clean-room-acceptance-contract-316cfafd9902).  
-**CLI PR:** [`zed-pkg/zed-cli#100`](https://github.com/zed-pkg/zed-cli/pull/100).  
+**Merged CLI PR:** [`zed-pkg/zed-cli#100`](https://github.com/zed-pkg/zed-cli/pull/100).  
 **E2E PR:** [`zed-pkg/zed-e2e#16`](https://github.com/zed-pkg/zed-e2e/pull/16).
 
 The completed [Unix clean-room contract](zed-develop-clean-room-acceptance.md)
@@ -16,18 +16,20 @@ on Windows Server 2022, and imports no implementation test helpers. It consumes
 no repository secret and makes no registry, cloud, AI-provider, or user-account
 request.
 
-## Reviewed source stack
+## Immutable reviewed stack
 
-The initial review stack is:
+The consumer workflow pins the merged CLI implementation rather than a branch:
 
 ```text
-zed-cli        bd34f4f494e1cc402efa7abb009b83b638480153
+zed-cli        fd3b3e487b2bdd129dd67403ad51f7299cfe6828
 zed-interfaces c2e049006453c26ca8ca291783f681fce75cb01f
 flags-2-env    2f62e40932a0fcb8b9bf1b4c84473e34fa3c51c7
 ```
 
-The E2E workflow pins those immutable revisions. A source correction requires a
-new explicit CLI pin and complete replay; a moving branch name is not evidence.
+The CLI merge commit preserves the failure-atomic Git-submodule takeover work
+that landed independently on `main` while adding the disjoint Windows shell and
+child-process corrections. A later source change requires a new explicit pin
+and complete replay; a moving branch name is not evidence.
 
 ## PowerShell command mode
 
@@ -66,21 +68,61 @@ The regression test does not merely inspect an argument vector. It:
 5. proves those canaries load during ordinary PowerShell startup; and
 6. proves the real `zed.exe` command path neither executes nor emits them.
 
-The same assertion verifies `ZED_DEV`, project-root selection, and child exit-code
+The same assertion verifies `ZED_DEV`, child project-root cwd, and exit-code
 propagation.
+
+## Canonical identity and Windows child cwd
+
+Project discovery and the managed environment retain the canonical filesystem
+identity. Windows canonicalization may produce verbatim paths:
+
+```text
+\\?\C:\path
+\\?\UNC\server\share\path
+```
+
+Those paths are valid identities but are not accepted consistently as a child
+process current directory. Before launch, Zed converts only the prefix:
+
+```text
+\\?\C:\path                    -> C:\path
+\\?\UNC\server\share\path     -> \\server\share\path
+```
+
+Ordinary drive paths, ordinary UNC paths, and device paths remain unchanged.
+The conversion uses UTF-16 code units, so Unicode project paths are not passed
+through lossy UTF-8 conversion. `ZED_DEV_PROJECT_ROOT` remains canonical while
+the native child starts from the equivalent process-compatible path.
+
+The external fixture begins in `project/src/nested`, which owns no manifest.
+PowerShell and cmd.exe must find `package.json` and `src/nested` from their own
+current directory. This proves they start at the owning project root without
+making one textual Windows path spelling part of the public contract.
 
 ## cmd.exe command mode
 
-Zed retains the existing command boundary:
+Zed retains the product boundary:
 
 ```text
 cmd.exe /D /S /C <command>
 ```
 
-`/D` disables AutoRun commands, `/S` applies cmd.exe's command-string parsing
-rules, and `/C` executes the command and exits. The independent suite verifies
-managed environment delivery, child exit-code propagation, and default
-`COMSPEC` selection when `SHELL` is absent.
+`/D` disables AutoRun commands, `/S` applies cmd.exe command-string parsing, and
+`/C` executes the command and exits.
+
+The independent harness uses two fixed-name batch files in the runner-temporary
+child cwd:
+
+1. `zed-develop-cmd-contract.cmd` performs one native statement per managed-env,
+   cwd, and exit-code assertion;
+2. `zed-develop-cmd-launcher.cmd` calls the assertion, captures `ERRORLEVEL` on
+   the next statement, and returns it unchanged.
+
+Zed executes `call zed-develop-cmd-launcher.cmd`. Relative fixed names avoid an
+incidental inner absolute-path quoting layer under `/S /C`; the test still
+exercises Zed's real shell arguments, selected cwd, environment delivery, and
+child status propagation. A static policy test rejects reintroducing quoted
+absolute batch invocation.
 
 ## Managed environment contract
 
@@ -146,27 +188,22 @@ The independent workflow must remain:
 - limited to runner-temporary evidence retained for no more than seven days; and
 - followed by a direct scan of retained evidence for every fake canary.
 
-A static policy suite fails if a future edit weakens any of those rules or
-removes the PowerShell, cmd.exe, profile, venv, HOME/USERPROFILE, failure, or
-canary assertions.
+The static policy suite also ratchets the PowerShell/cmd/profile/venv assertions,
+relative cmd launcher, explicit `ERRORLEVEL` capture, and locked source build.
 
 ## Evidence status
 
-The exact CLI and E2E heads are running through GitHub Actions. Before these PRs
-are ready to merge, this section and the Linear contract will record:
-
-- final source and E2E heads;
-- Windows workflow and repository-wide check run IDs;
-- assertion count and managed-environment digest;
-- evidence archive digest;
-- direct canary-scan result;
-- final CLI, E2E, and documentation merge commits.
+CLI PR #100 merged as `fd3b3e487b2bdd129dd67403ad51f7299cfe6828`.
+The exact final E2E head, Windows workflow and repository-wide run IDs,
+assertion count, managed-environment digest, evidence archive digest, canary
+scan, and E2E/docs merge commits will be recorded here before certification is
+marked complete.
 
 ## Change control
 
 Any future change to Windows shell arguments, profile behavior, default shell
-selection, HOME/USERPROFILE handling, virtual-environment activation, or
-failure propagation requires:
+selection, canonical identity versus child cwd, HOME/USERPROFILE handling,
+virtual-environment activation, or failure propagation requires:
 
 1. a Linear implementation or contract issue;
 2. focused repository-local tests;
