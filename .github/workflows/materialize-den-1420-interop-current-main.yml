@@ -4,12 +4,15 @@ on:
   push:
     branches:
       - agent/den-1420-universal-interop-current-main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
 
 concurrency:
-  group: materialize-den-1420-current-main-${{ github.ref }}
+  group: materialize-den-1420-current-main-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
