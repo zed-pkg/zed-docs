@@ -1,0 +1,136 @@
+name: materialize DEN-1420 interop on current main
+
+on:
+  push:
+    branches:
+      - agent/den-1420-universal-interop-current-main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: materialize-den-1420-current-main-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      RFC_SHA: 1e5dc05e8ce4f850cf1b3f014800f362cdbaf43b
+      MATRIX_SHA: 8956803223aab2a62f8bd0ddcffafb95234f6444
+    steps:
+      - name: Check out current-main replacement branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: agent/den-1420-universal-interop-current-main
+          fetch-depth: 0
+          persist-credentials: false
+          show-progress: false
+
+      - name: Fetch and verify the reviewed source histories
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 \
+            "https://github.com/${GITHUB_REPOSITORY}.git" \
+            refs/heads/agent/den-1420-universal-environment-interop-v2:refs/remotes/source/rfc
+          git fetch --no-tags --depth=1 \
+            "https://github.com/${GITHUB_REPOSITORY}.git" \
+            refs/heads/agent/den-1420-interop-matrix-contract:refs/remotes/source/matrix
+          test "$(git rev-parse refs/remotes/source/rfc)" = "$RFC_SHA"
+          test "$(git rev-parse refs/remotes/source/matrix)" = "$MATRIX_SHA"
+
+      - name: Compose the RFC and executable policy semantically
+        run: |
+          set -euo pipefail
+          mkdir -p docs/interop scripts .github/workflows
+          git show "$RFC_SHA:docs/24-universal-environment-interop.md" \
+            > docs/28-universal-environment-interop.md
+          for path in \
+            docs/interop/compatibility-matrix.json \
+            docs/interop/README.md \
+            scripts/check_interop_matrix.py \
+            .github/workflows/interop-matrix.yml
+          do
+            git show "$MATRIX_SHA:$path" > "$path"
+          done
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          rfc = Path("docs/28-universal-environment-interop.md")
+          text = rfc.read_text(encoding="utf-8")
+          old_heading = "# 24. Universal environment-manager interoperability"
+          new_heading = "# 28. Universal environment-manager interoperability"
+          if text.count(old_heading) != 1:
+              raise SystemExit("reviewed RFC heading was not found exactly once")
+          text = text.replace(old_heading, new_heading, 1)
+          text = text.replace("RFC 24", "RFC 28").replace("doc 24", "doc 28")
+          rfc.write_text(text, encoding="utf-8")
+
+          paths = [
+              Path("docs/interop/compatibility-matrix.json"),
+              Path("docs/interop/README.md"),
+              Path("scripts/check_interop_matrix.py"),
+              Path(".github/workflows/interop-matrix.yml"),
+          ]
+          for path in paths:
+              value = path.read_text(encoding="utf-8")
+              value = value.replace(
+                  "docs/24-universal-environment-interop.md",
+                  "docs/28-universal-environment-interop.md",
+              )
+              value = value.replace(
+                  "24-universal-environment-interop.md",
+                  "28-universal-environment-interop.md",
+              )
+              value = value.replace("RFC 24", "RFC 28").replace("doc 24", "doc 28")
+              path.write_text(value, encoding="utf-8")
+
+          readme = Path("README.md")
+          value = readme.read_text(encoding="utf-8")
+          row = (
+              "| [28](docs/28-universal-environment-interop.md) | "
+              "Flox, Devbox, mise/asdf, and scratch OCI interoperability | "
+              "RFC; executable policy validated |\n"
+          )
+          if row not in value:
+              anchor = (
+                  "| [27](docs/27-durable-first-install-manifests.md) | "
+                  "Durable `.zpkg.toml` creation on first dependency install | "
+                  "implemented; Node + Go/Python/Rust certified on Linux/macOS |\n"
+              )
+              if value.count(anchor) != 1:
+                  raise SystemExit("current-main README row 27 was not found exactly once")
+              value = value.replace(anchor, anchor + row, 1)
+          readme.write_text(value, encoding="utf-8")
+          PY
+
+      - name: Validate the executable documentation contract
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/check_interop_matrix.py
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/check_interop_matrix.py
+          grep -F '# 28. Universal environment-manager interoperability' \
+            docs/28-universal-environment-interop.md
+          grep -F 'docs/28-universal-environment-interop.md' README.md
+          test ! -e docs/24-universal-environment-interop.md
+          git diff --check
+
+      - name: Commit only the permanent semantic merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/materialize-den-1420-interop-current-main.yml
+          git add -A
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs(DEN-1420): land executable universal interop contract'
+          git push \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            HEAD:agent/den-1420-universal-interop-current-main
