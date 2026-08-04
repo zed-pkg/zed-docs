@@ -130,8 +130,14 @@ def validate_adapter(adapter: dict[str, Any], index: int) -> None:
         f"{adapter_id} must keep platform identity outside SemVer build metadata",
     )
     require("latest" not in adapter["export_command"].lower(), f"{adapter_id} export may not emit latest")
-    require("--frozen" in adapter["frozen_restore_command"] or adapter_id.startswith("oci-"),
-            f"{adapter_id} frozen restore must be explicit")
+
+    restore = adapter["frozen_restore_command"]
+    explicit_restore = (
+        "--frozen" in restore
+        or adapter_id.startswith("oci-")
+        or (adapter_id == "nix" and "--offline" in restore)
+    )
+    require(explicit_restore, f"{adapter_id} frozen restore must be explicit")
 
     if adapter_id in {"flox", "devbox"}:
         require(adapter.get("uses_nix") is True, f"{adapter_id} must declare its Nix backing")
