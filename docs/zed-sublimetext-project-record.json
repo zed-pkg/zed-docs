@@ -1,0 +1,43 @@
+{
+  "schema": "zed-pkg/project-tracking/v1",
+  "title": "Package, publish, and track the zed-sublimetext extension",
+  "github_organization": "zed-pkg",
+  "repository": "zed-pkg/zed-sublimetext",
+  "linear_project": "github.com/zed-pkg",
+  "linear_issue": "DEN-2326",
+  "linear_document": "https://linear.app/denman/document/zed-sublimetext-extension-delivery-and-project-tracking-contract-d848b2cadac8",
+  "github_project_title": "zed-pkg-project",
+  "github_project_status": "permission-blocked",
+  "shared_cli_issue": "zed-pkg/zed-cli#191",
+  "initial_implementation_sha": "2776656d4c3e24218b1b758f0462190b4fc1f5c6",
+  "python_38_compatibility_sha": "08e8255128d0c138ae2506bc267036584bc5908f",
+  "packaging_pull_request": 1,
+  "packaging_candidate_sha": "1e278d7373c3e138a871b3f09104200addd18138",
+  "merge_sha": "358c746552601d472f7878b43882d9d0bec0bf2b",
+  "post_merge_workflow_run": 31037791942,
+  "post_merge_workflow_status": "queued",
+  "local_preflight": {
+    "tests_passed": 18,
+    "deterministic_archive_verified": true,
+    "artifact_sha256": "3446389f72ffcd97286de712726c26397f01cbd268fb402b30bdfe0af7dc02e3",
+    "authoritative_release_artifact": false
+  },
+  "status": "MergedAwaitingArtifact",
+  "gate": "Complete the merge-commit workflow, retain and checksum the Actions artifact, verify installation in a clean Sublime Text profile, publish through Package Control, and add the work to zed-pkg-project when Projects v2 mutation access is available.",
+  "required_evidence": [
+    "terminal_main_workflow",
+    "actions_artifact_id",
+    "actions_artifact_digest",
+    "clean_profile_installation",
+    "package_control_publication",
+    "github_project_item"
+  ],
+  "safety_contract": {
+    "inspection_is_read_only": true,
+    "commands_use_argument_arrays": true,
+    "confirmation_required_for_mutation": true,
+    "output_redaction_required": true,
+    "silent_package_mutation": false,
+    "extension_is_not_dependency_resolver": true
+  }
+}
