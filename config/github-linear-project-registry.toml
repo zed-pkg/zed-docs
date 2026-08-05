@@ -29,6 +29,8 @@ canonical_delivery_repos = [
   "zed-pkg/zed-infra",
   "zed-pkg/zed-e2e",
   "zed-pkg/zed-monorepo",
+  "zed-pkg/zed-vscode",
+  "zed-pkg/zed-sublimetext",
 ]
 artifact_policy = "commit-addressed Actions artifacts; signed releases only from reviewed tags"
 
