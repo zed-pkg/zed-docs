@@ -38,6 +38,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [28](docs/28-universal-environment-interop.md) | Flox, Devbox, mise/asdf, and scratch OCI interoperability | RFC; executable policy validated |
 | [29](docs/29-native-dependencies-and-install-hooks.md) | Native prerequisites, install hooks, consent boundaries, staging, caching, and Nix purity | manifest contract implemented; installer lifecycle under review |
 | [30](docs/30-submodules-zed-packages-and-composition.md) | Git submodules vs Zed packages, workspaces, release composition, and deployment boundaries | operational policy; pack guard under review |
+| [31](docs/31-zed-lock-evented-cross-platform-locking.md) | `zed-lock`: helper-thread async adapters over kernel-backed cross-process locks | architecture approved; extraction tracked |
 
 Independent executable acceptance contracts that do not consume architecture
 numbers are indexed separately. The first is the
