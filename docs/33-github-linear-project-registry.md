@@ -13,6 +13,9 @@ GitHub Project <org>-project
 
 The machine-readable source is
 [`config/github-linear-project-registry.toml`](../config/github-linear-project-registry.toml).
+The authenticated branch, pull-request, exact-head test, artifact, release, and
+Linear update procedure is maintained in
+[`github-org-delivery-operations.md`](github-org-delivery-operations.md).
 This document explains the policy, current records, and the permission boundary
 for creating organization Projects.
 
@@ -41,8 +44,8 @@ For each organization:
 
 | GitHub organization | Canonical Linear project | Intended GitHub Project | Current Project state | Canonical delivery scope |
 | --- | --- | --- | --- | --- |
-| [`zed-pkg`](https://github.com/zed-pkg) | [`github.com/zed-pkg`](https://linear.app/denman/project/githubcomzed-pkg-5a53230ae6cc) | `zed-pkg-project` | permission blocked; not claimed as created | CLI, interfaces, clients, servers, sync, infra, E2E, docs, monorepo |
-| [`zed-pkg-test`](https://github.com/zed-pkg-test) | [`github.com/zed-pkg-test`](https://linear.app/denman/project/githubcomzed-pkg-test-e0b5db761974) | `zed-pkg-test-project` | permission blocked; not claimed as created | fixture packages, lifecycle matrix, security, offline, OCI, manager, and Nix certification |
+| [`zed-pkg`](https://github.com/zed-pkg) | [`github.com/zed-pkg`](https://linear.app/denman/project/githubcomzed-pkg-5a53230ae6cc) | `zed-pkg-project` | permission blocked; not claimed as created | CLI, interfaces, lock runtime, clients, servers, sync, infra, E2E, docs, monorepo |
+| [`zed-pkg-test`](https://github.com/zed-pkg-test) | [`github.com/zed-pkg-test`](https://linear.app/denman/project/githubcomzed-pkg-test-e0b5db761974) | `zed-pkg-test-project` | permission blocked; not claimed as created | fixture packages, lifecycle matrix, security, offline, OCI, manager, registry, concurrency, and Nix certification |
 
 The connected GitHub App installations can administer the repositories in both
 organizations. Their current installation IDs are retained in the registry only
