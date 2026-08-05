@@ -65,7 +65,8 @@ github_project_url = ""
 
 Do not guess that a board is `/projects/1`. Do not write a fabricated URL into
 Linear. A board becomes `created` only after its node/number and owner are read
-back from GitHub.
+back from GitHub. Permission grant, deduplication, field creation, and registry
+read-back are tracked in [zed-docs issue #47](https://github.com/zed-pkg/zed-docs/issues/47).
 
 ## Operator commands after Projects permission is granted
 
