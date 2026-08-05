@@ -23,7 +23,13 @@ Linear tracking issue: `DEN-2211`.
 - Pull request: `#42`
 - Reviewed head: `b5608b49195b50de5a7068c37892e5f46710fc4e`
 - Merge commit: `d36ac522915792539740cb105e928652503dfde2`
-- Result: the reusable `certify-zed-package.yml` workflow packs the canonical package and every declared target, writes deterministic `SHA256SUMS` plus `zed-artifacts.json`, and uploads the exact validated archives as a retained GitHub Actions artifact with read-only permissions.
+- Workflow run: `31032369701`
+- Artifact: `zed-packages-zed-interfaces-d36ac522915792539740cb105e928652503dfde2`
+- Artifact ID: `8941401392`
+- Artifact ZIP digest: `sha256:d37393a6b8d246ac287745faf164dfed2103a96ce6a99e4ffe9ae480272269b0`
+- Canonical package: `zed-pkg-zed-interfaces-0.1.0.tar.gz`
+- Canonical package digest: `83842dfc88ea42aa966a40e64394ca4ebd938f5d528350ddfca1d572db54023d`
+- Result: the reusable `certify-zed-package.yml` workflow packed the canonical package, wrote deterministic `SHA256SUMS` plus `zed-artifacts.json`, uploaded the exact validated archive with read-only permissions, and passed post-download checksum verification.
 
 ### Browser/WASM transport certification
 
