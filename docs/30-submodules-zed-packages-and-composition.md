@@ -1,6 +1,6 @@
 # Git submodules, Zed packages, workspaces, and release composition
 
-Status: operational policy; package publication-boundary hardening is under review in `zed-cli` PR 171; remote editable-workspace sources are a proposal, not an implemented feature.
+Status: operational policy; the primary package publication boundary shipped in `zed-cli` PR 171; nested-repository and reviewed generated-input hardening shipped in `zed-cli` PR 172; remote editable-workspace sources are a proposal, not an implemented feature.
 
 Git submodules and Zed packages solve different problems. Treating them as interchangeable makes a repository graph difficult to build, release, secure, and deploy. This document defines the supported boundary between source composition, installable dependencies, release inventory, and deployment composition.
 
@@ -63,13 +63,45 @@ An excluded optional submodule does not have to be initialized merely to pack un
 
 `.gitignore` is a local working-tree rule, not a publication rule. A file ignored by Git can still be eligible for a package unless it is separately excluded by the package contract.
 
-The package guard under review in `zed-cli` PR 171 fails closed when an untracked Git-ignored regular file remains eligible for a whole-tree or target artifact. Supported remedies are explicit `[publish].exclude` entries and, for a whole-tree package, `.zedignore` rules.
+The package guard shipped in `zed-cli` PR 171 fails closed when an untracked Git-ignored regular file remains eligible for a whole-tree or target artifact. Supported remedies are explicit `[publish].exclude` entries and, for a whole-tree package, `.zedignore` rules.
 
-When Git is available, Zed uses Git's own ignore engine and preserves the exception for tracked files that also match an ignore rule. The read-only query scopes `safe.directory` to the exact canonical worktree, without changing user or repository configuration and without trusting a wildcard.
+When Git is available, Zed uses Git's own ignore engine and preserves the exception for tracked files that also match an ignore rule. The read-only query scopes `safe.directory` to the exact canonical owning worktree, without changing user or repository configuration and without trusting a wildcard.
 
-When Git is absent from a slim runtime image, Zed conservatively evaluates global excludes, `.git/info/exclude`, and nested `.gitignore` files. Every ignore-matched regular file is treated as potentially untracked. This may require an explicit package exclusion for a tracked ignore-matched file, but it does not convert the absence of Git into permission to publish a secret.
+When Git is absent from a slim runtime image, Zed conservatively evaluates global excludes, ordinary and linked-worktree `.git/info/exclude` files, ancestor `.gitignore` files, and nested `.gitignore` files. Every ignore-matched regular file is treated as potentially untracked. This may require an explicit package exclusion for a tracked ignore-matched file, but it does not convert the absence of Git into permission to publish a secret.
 
-For polyglot packages, source targets are copied into staging trees before final packing. A `.zedignore` located only inside a source target is not an active final-pack rule in that staging lifecycle. Use a root manifest `[publish].exclude` rule for target content that must be omitted.
+For polyglot packages, source targets are copied into staging trees before final packing. A `.zedignore` located only inside a source target is not an active final-pack rule in that staging lifecycle. Use a root manifest `[publish].exclude` rule for ordinary target content that must be omitted.
+
+Repository-level files beginning with `LICENSE`, `LICENCE`, `COPYING`, or `NOTICE` are different: the packer copies them into every target that does not provide its own file of the same name, and these legal files are always included. The hardening shipped in PR 172 models that copy path before packing, so an ignored root legal file cannot bypass target-root scanning or be hidden with `[publish].exclude`.
+
+PR 172 also extends the Git-backed scan into initialized nested repositories and submodules. Ignored local files inside an embedded source tree are therefore evaluated against the final package artifacts even though the superproject's `git ls-files` query cannot see them.
+
+### Reviewed generated inputs
+
+Some release workflows intentionally generate ignored artifacts, such as compiled WebAssembly or generated client bundles. PR 172 adds a narrow root-level `.zedinclude` control file for those cases.
+
+The contract is fail closed:
+
+- `.zedinclude` must be a regular file in the package root;
+- it must be tracked, committed, and clean in both the index and worktree;
+- patterns are project-relative globs using `/` separators;
+- absolute paths, traversal, negation, Windows drive prefixes, empty segments, backslashes, and project-wide patterns such as `*`, `**`, and `**/*` are rejected;
+- the control file itself is excluded from every package artifact;
+- Git must be available to verify the control file; the Git-less fallback does not honor it;
+- allowing an ignored file does not weaken included-submodule initialization, revision, cleanliness, recursion, or nested-VCS-metadata checks.
+
+Example:
+
+```gitignore
+# .gitignore
+dist/generated.wasm
+```
+
+```text
+# .zedinclude — reviewed and committed
+dist/generated.wasm
+```
+
+Prefer force-tracking a stable source artifact or declaring an ordinary package dependency when that accurately represents the release. Use `.zedinclude` only for generated bytes that must enter the package while remaining ignored during normal development.
 
 ## Release composition
 
@@ -141,7 +173,9 @@ Repository policy should reject:
 - a package dependency represented only by a submodule;
 - an included submodule that is uninitialized, dirty, or at the wrong commit;
 - nested VCS metadata in a package artifact;
-- an ignored file that remains eligible for publication;
+- an ignored file in the primary or an initialized nested Git worktree that remains eligible for publication;
+- an ignored root legal file that would be copied into a polyglot target;
+- an untracked, dirty, symlinked, malformed, or project-wide `.zedinclude` policy;
 - an Argo CD or equivalent render path inside a submodule;
 - a release that records only mutable branches or tags;
 - disagreement between the release manifest, package lock, contract version, and deployed OCI digest.
