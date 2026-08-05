@@ -35,6 +35,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [25](docs/25-complete-constraint-solving.md) | Complete one-version solving for overlapping transitive ranges | implemented; independent black-box certification |
 | [26](docs/26-deterministic-nix-export-bundles.md) | Pure deterministic Zed → Nix flake-bundle rendering contract | implementation under review |
 | [27](docs/27-durable-first-install-manifests.md) | Durable `.zpkg.toml` creation on first dependency install | implemented; Node + Go/Python/Rust certified on Linux/macOS |
+| [28](docs/28-universal-environment-interop.md) | Flox, Devbox, mise/asdf, and scratch OCI interoperability | RFC; executable policy validated |
 
 Independent executable acceptance contracts that do not consume architecture
 numbers are indexed separately. The first is the
