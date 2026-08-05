@@ -46,14 +46,20 @@ It must not become an independent package resolver.
 | Packaging PR | `zed-pkg/zed-sublimetext#1` |
 | Reviewed PR head | `1e278d7373c3e138a871b3f09104200addd18138` |
 | Squash merge commit | `358c746552601d472f7878b43882d9d0bec0bf2b` |
-| Post-merge workflow | run `31037791942` |
+| Successful post-merge workflow | run `31037791942` |
+| Artifact ID | `8943657193` |
+| Artifact name | `ZedPackageInsights-358c746552601d472f7878b43882d9d0bec0bf2b` |
+| Retained artifact ZIP SHA-256 | `69c4adc7c69e00c67bbdf02789ff6959bcafb1546b80a9045bd4e1ce349f0bf4` |
+| Installable package SHA-256 | `b82e2b6b48c6151cbcda6c885f2c847026778ec86e8e64068ec6b8c2d51ed740` |
+| Artifact expiration | `2026-09-04T19:17:28Z` |
 | Local preflight | 18 tests passed; deterministic package build verified |
-| Local preflight artifact SHA-256 | `3446389f72ffcd97286de712726c26397f01cbd268fb402b30bdfe0af7dc02e3` |
 
-The local digest is preflight evidence only. The authoritative retained artifact
-is the commit-addressed GitHub Actions artifact produced from the merge commit.
-At the time of this record, workflow run `31037791942` was queued and had not yet
-produced that retained artifact.
+The GitHub Actions artifact is the authoritative retained build from the merge
+commit. Its outer digest exactly matches GitHub's reported digest. The inner
+`ZedPackageInsights.sublime-package` passed ZIP integrity verification and
+contains 27 sorted, unique entries with the fixed `1980-01-01 00:00:00`
+timestamp. The vendored TOML parser and its MIT license are present; development
+scripts, tests, and workflow metadata are absent.
 
 ## Packaging contract
 
@@ -62,13 +68,16 @@ produced that retained artifact.
 timestamps, permissions, and compression. Development-only paths, test sources,
 GitHub metadata, and Zed package-publication metadata are excluded.
 
-The CI contract is:
+The completed CI contract is:
 
 1. compile and test under Python 3.8;
 2. compile and test under Python 3.14;
 3. build the deterministic Sublime Text package;
 4. verify archive contents and byte-for-byte reproducibility;
 5. upload `ZedPackageInsights-<commit-sha>` with bounded retention.
+
+All five gates passed for merge commit
+`358c746552601d472f7878b43882d9d0bec0bf2b`.
 
 ## GitHub Project operating record
 
@@ -85,15 +94,18 @@ Required board fields:
 - **Area:** IDE Integration, CLI Contract, Packaging, Documentation, Testing
 - **Repository:** `zed-sublimetext`
 
+The release-distribution work is tracked in
+`zed-pkg/zed-sublimetext#2` and Linear issue `DEN-2326`.
+
 ## Remaining promotion gates
 
-1. workflow run `31037791942` completes successfully;
-2. retain and checksum its `ZedPackageInsights-358c746...` artifact;
-3. install the artifact in a clean Sublime Text profile on supported platforms;
-4. verify healthy, stale-lock, lock-only, invalid-TOML, and interrupted-
+1. install the retained artifact in clean Sublime Text profiles on macOS,
+   Windows, and Linux;
+2. verify healthy, stale-lock, lock-only, invalid-TOML, and interrupted-
    transaction fixtures;
-5. submit or update the package in Package Control;
-6. add the delivery issue and release work to `zed-pkg-project` when Projects v2
-   mutation access is available;
-7. update `DEN-2326` with terminal workflow, artifact, installation, and
-   publication evidence before marking Done.
+3. submit or update the package in Package Control;
+4. record the Package Control publication URL and version;
+5. add the delivery issue, release issue, and merged PR to `zed-pkg-project`
+   when Projects v2 mutation access is available;
+6. update `DEN-2326` with installation and publication evidence before marking
+   Done.
