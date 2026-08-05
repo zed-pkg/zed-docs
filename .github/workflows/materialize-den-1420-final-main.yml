@@ -81,7 +81,8 @@ jobs:
       - name: Validate the composed executable contract
         run: |
           set -euo pipefail
-          PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile scripts/check_interop_matrix.py
+          python3 -m py_compile scripts/check_interop_matrix.py
+          rm -rf scripts/__pycache__
           PYTHONDONTWRITEBYTECODE=1 python3 scripts/check_interop_matrix.py
           test ! -d scripts/__pycache__
           grep -F '# 28. Universal environment-manager interoperability' \
