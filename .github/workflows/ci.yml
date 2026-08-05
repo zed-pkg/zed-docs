@@ -77,3 +77,6 @@ jobs:
 
       - name: Check cross-repo deep-links
         run: python3 zed-docs/scripts/check-links.py "$GITHUB_WORKSPACE"
+
+      - name: Validate GitHub organization project registry
+        run: python3 zed-docs/scripts/check-github-linear-project-registry.py
