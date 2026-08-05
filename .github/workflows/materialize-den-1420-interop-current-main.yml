@@ -72,6 +72,12 @@ jobs:
               raise SystemExit("reviewed RFC heading was not found exactly once")
           text = text.replace(old_heading, new_heading, 1)
           text = text.replace("RFC 24", "RFC 28").replace("doc 24", "doc 28")
+          status = "**Status:** RFC and staged implementation plan for `DEN-1420`.  \n"
+          related = "**Related:** `DEN-1411`, `DEN-1413`, `DEN-588`, `DEN-591`, `DEN-100`.  \n"
+          if text.count(status) != 1 or text.count(related) != 1:
+              raise SystemExit("reviewed RFC status block was not found exactly once")
+          text = text.replace(status, status.rstrip() + "<br>\n", 1)
+          text = text.replace(related, related.rstrip() + "<br>\n", 1)
           rfc.write_text(text, encoding="utf-8")
 
           paths = [
@@ -120,6 +126,8 @@ jobs:
           grep -F '# 28. Universal environment-manager interoperability' \
             docs/28-universal-environment-interop.md
           grep -F 'docs/28-universal-environment-interop.md' README.md
+          grep -F '**Status:** RFC and staged implementation plan for `DEN-1420`.<br>' \
+            docs/28-universal-environment-interop.md
           test ! -e docs/24-universal-environment-interop.md
           git diff --check
 
