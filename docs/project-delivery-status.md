@@ -2,7 +2,7 @@
 
 Updated: 2026-08-05
 
-This document is the version-controlled GitHub-side companion to the Linear project `github.com/zed-pkg`. It records merged delivery evidence and the current promotion gates for work spanning repositories in the `zed-pkg` and `zed-pkg-test` organizations.
+This document is the version-controlled GitHub-side companion to the Linear projects `github.com/zed-pkg` and `github.com/zed-pkg-test`. It records merged delivery evidence and the current promotion gates for work spanning repositories in the `zed-pkg` and `zed-pkg-test` organizations.
 
 Linear tracking issue: `DEN-2211`.
 
@@ -114,15 +114,15 @@ Do not mark a project item Done merely because code exists on a branch or a pull
 | GitHub organization | Linear project | GitHub Project title | Scope |
 | --- | --- | --- | --- |
 | `zed-pkg` | `github.com/zed-pkg` | `zed-pkg-project` | Product, interfaces, SDKs, CLI, API, docs, infrastructure, and release evidence |
-| `zed-pkg-test` | `github.com/zed-pkg` | `zed-pkg-test-project` | Independent consumer, browser, lifecycle, install-boundary, and release certification |
+| `zed-pkg-test` | `github.com/zed-pkg-test` | `zed-pkg-test-project` | Independent consumer, browser, lifecycle, install-boundary, fixture, and release certification |
 
-The test organization remains part of the same Linear program because it supplies independent evidence for product repositories.
+Cross-organization work links related issues between the two Linear projects. Product implementation remains in `github.com/zed-pkg`; test-organization fixtures, certification infrastructure, and follow-up tasks originating in `zed-pkg-test` remain in `github.com/zed-pkg-test`.
 
-For additional organizations, use the same convention: one organization project titled `<organization>-project` and one Linear project titled `github.com/<organization>`, unless a documented shared-program boundary deliberately maps multiple organizations to one Linear project as `zed-pkg-test` does here.
+For additional organizations, use the same convention: one organization project titled `<organization>-project` and one Linear project titled `github.com/<organization>`. Record any deliberate exception explicitly instead of silently combining organizations.
 
 ## Promotion procedure
 
-1. Create or update the Linear issue and attach the canonical repository/PR.
+1. Create or update the Linear issue in the project matching the owning GitHub organization and attach the canonical repository/PR.
 2. Add the issue or PR to the owning organization GitHub Project.
 3. Record the exact candidate SHA and remaining gate.
 4. Require terminal exact-head checks and no unresolved review threads.
