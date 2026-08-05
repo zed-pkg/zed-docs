@@ -1,6 +1,6 @@
 # Git submodules, Zed packages, workspaces, and release composition
 
-Status: operational policy; the primary package publication boundary shipped in `zed-cli` PR 171; nested-repository and reviewed generated-input hardening is under review in `zed-cli` PR 172; remote editable-workspace sources are a proposal, not an implemented feature.
+Status: operational policy; the primary package publication boundary shipped in `zed-cli` PR 171; nested-repository and reviewed generated-input hardening shipped in `zed-cli` PR 172; remote editable-workspace sources are a proposal, not an implemented feature.
 
 Git submodules and Zed packages solve different problems. Treating them as interchangeable makes a repository graph difficult to build, release, secure, and deploy. This document defines the supported boundary between source composition, installable dependencies, release inventory, and deployment composition.
 
@@ -71,15 +71,15 @@ When Git is absent from a slim runtime image, Zed conservatively evaluates globa
 
 For polyglot packages, source targets are copied into staging trees before final packing. A `.zedignore` located only inside a source target is not an active final-pack rule in that staging lifecycle. Use a root manifest `[publish].exclude` rule for ordinary target content that must be omitted.
 
-Repository-level files beginning with `LICENSE`, `LICENCE`, `COPYING`, or `NOTICE` are different: the packer copies them into every target that does not provide its own file of the same name, and these legal files are always included. The hardening under review in PR 172 models that copy path before packing, so an ignored root legal file cannot bypass target-root scanning or be hidden with `[publish].exclude`.
+Repository-level files beginning with `LICENSE`, `LICENCE`, `COPYING`, or `NOTICE` are different: the packer copies them into every target that does not provide its own file of the same name, and these legal files are always included. The hardening shipped in PR 172 models that copy path before packing, so an ignored root legal file cannot bypass target-root scanning or be hidden with `[publish].exclude`.
 
 PR 172 also extends the Git-backed scan into initialized nested repositories and submodules. Ignored local files inside an embedded source tree are therefore evaluated against the final package artifacts even though the superproject's `git ls-files` query cannot see them.
 
 ### Reviewed generated inputs
 
-Some release workflows intentionally generate ignored artifacts, such as compiled WebAssembly or generated client bundles. PR 172 proposes a narrow root-level `.zedinclude` control file for those cases.
+Some release workflows intentionally generate ignored artifacts, such as compiled WebAssembly or generated client bundles. PR 172 adds a narrow root-level `.zedinclude` control file for those cases.
 
-The proposed contract is fail closed:
+The contract is fail closed:
 
 - `.zedinclude` must be a regular file in the package root;
 - it must be tracked, committed, and clean in both the index and worktree;
