@@ -40,6 +40,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [30](docs/30-submodules-zed-packages-and-composition.md) | Git submodules vs Zed packages, workspaces, release composition, and deployment boundaries | operational policy; pack guard under review |
 | [31](docs/31-zed-lock-evented-cross-platform-locking.md) | `zed-lock`: helper-thread async adapters over kernel-backed cross-process locks | architecture approved; extraction tracked |
 | [32](docs/32-org-repository-package-pattern.md) | Organization clients/interfaces/lib/CLI/monorepo package pattern and fleet audit | operational policy; rollout audited |
+| [33](docs/33-github-linear-project-registry.md) | Canonical GitHub organization, Linear project, GitHub Project, and artifact ownership registry | operational policy; Projects permission blocked |
 
 Independent executable acceptance contracts that do not consume architecture
 numbers are indexed separately. The first is the
