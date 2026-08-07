@@ -43,6 +43,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [32](docs/32-org-repository-package-pattern.md) | Organization clients/interfaces/lib/CLI/monorepo package pattern and fleet audit | operational policy; rollout audited |
 | [33](docs/33-github-linear-project-registry.md) | Canonical GitHub organization, Linear project, GitHub Project, and artifact ownership registry | operational policy; Projects permission blocked |
 | [29](docs/29-native-dependencies-and-install-hooks.md) | Native prerequisites, install hooks, consent boundaries, staging, caching, and Nix purity | manifest contract implemented; installer lifecycle under review |
+| [28](docs/28-native-dependencies-and-install-hooks.md) | Native prerequisites and staged package lifecycle hooks | manifest contract implemented; CLI execution under review |
 
 Independent executable acceptance contracts that do not consume architecture
 numbers are indexed separately. The first is the
