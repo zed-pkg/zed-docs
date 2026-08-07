@@ -2,6 +2,10 @@
 
 **Status:** RFC and staged implementation plan for `DEN-1420`.<br>
 **Related:** `DEN-1411`, `DEN-1413`, `DEN-588`, `DEN-591`, `DEN-100`.<br>
+# 24. Universal environment-manager interoperability
+
+**Status:** RFC and staged implementation plan for `DEN-1420`.  
+**Related:** `DEN-1411`, `DEN-1413`, `DEN-588`, `DEN-591`, `DEN-100`.  
 **First implementation slice:** `zed-interfaces` PR #10 introduces the shared
 `EnvironmentPlan` contract and validation model; it is not considered shipped
 until that PR and its generated-schema/lock follow-ups are reviewed and merged.
