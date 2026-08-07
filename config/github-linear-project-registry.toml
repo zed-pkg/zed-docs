@@ -1,5 +1,5 @@
 schema = "zed.github-linear-project-registry/v1"
-updated_at = "2026-08-05"
+updated_at = "2026-08-07"
 
 [policy]
 linear_project_name = "github.com/<org>"
@@ -36,6 +36,10 @@ canonical_delivery_repos = [
   "zed-pkg/zed-vscode",
   "zed-pkg/zed-sublimetext",
   "zed-pkg/zed-intellij",
+  "zed-pkg/zed-qtcreator",
+  "zed-pkg/zed-xcode",
+  "zed-pkg/zed-eclipse",
+  "zed-pkg/zed-visual-studio",
 ]
 artifact_policy = "commit-addressed Actions artifacts; signed releases only from reviewed tags"
 

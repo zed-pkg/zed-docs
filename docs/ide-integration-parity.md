@@ -1,6 +1,6 @@
 # IDE integration parity and sandbox certification
 
-Updated: 2026-08-05
+Updated: 2026-08-07
 
 ## Purpose
 
@@ -18,33 +18,33 @@ Studio against one shared capability, safety, testing, and distribution bar.
    unit tests.
 2. **Native shell** — editor-native diagnostics, package tree/tool window,
    file watchers, settings, exact command and working-directory preview, and
-   explicit confirmation before mutation.
+   explicit confirmation before mutation. A tested controller/model layer is a
+   prerequisite but does not by itself count as a complete vendor UI shell.
 3. **Distribution** — dedicated repository, reproducible package, retained
    artifacts, clean editor-instance tests, signing, and marketplace or update-
    channel publication.
 
 An integration is described as fully user-facing parity only after all three
-levels pass. Buildable cores are not represented as completed editor plugins.
+levels pass.
 
 ## Current comparison
 
-| Integration | Repository/source | Core | Native shell | Distribution | Current position |
+| Integration | Repository | Core | Native shell | Distribution | Current position |
 | --- | --- | --- | --- | --- | --- |
 | Sublime Text | `zed-pkg/zed-sublimetext` | Pass | Pass | Partial | Live integration; multi-root parity, staging recovery, confirmation gates, deterministic `.sublime-package`, and independent Python 3.8/3.14 sandbox certification pass. Clean-profile platform verification and Package Control publication remain. |
 | JetBrains / IntelliJ | `zed-pkg/zed-intellij` | Pass | Pass | Partial | Live integration; plugin verifier, package-state tool window/diagnostics, multi-package discovery, output redaction, wrong-launcher detection, staging recovery, and independent sandbox certification pass. Marketplace/clean-instance publication evidence remains. |
-| VS Code | `zed-pkg/.github/blueprints/zed-vscode` | Pass | Candidate pass | Partial | Source-visible extension candidate with multi-root tree, Problems diagnostics, commands, settings, watchers, safe CLI boundary, tests, and valid VSIX. Dedicated repository, extension-host GUI tests, signing, and Marketplace publication remain. |
-| Qt Creator | `zed-pkg/.github/blueprints/zed-qtcreator` | Pass | Missing | Missing | C++20 process/safety core and CTest pass. `ExtensionSystem::IPlugin`, ProjectExplorer/Issues integration, clean-instance tests, and plugin packaging remain. |
-| Xcode | `zed-pkg/.github/blueprints/zed-xcode` | Pass | Missing | Missing | Swift process/safety core and macOS tests pass. Companion app, Xcode Source Editor Extension, entitlements, signing, and app/appex tests remain. |
-| Eclipse | `zed-pkg/.github/blueprints/zed-eclipse` | Pass | Missing | Missing | Java 21 process/safety core and Maven/JUnit tests pass. PDE/OSGi shell, view, markers, quick fixes, plug-in application tests, and p2 publication remain. |
-| Visual Studio | `zed-pkg/.github/blueprints/zed-visual-studio` | Pass | Missing | Missing | .NET 8 process/safety core and Windows tests pass. AsyncPackage, tool window, Error List integration, experimental-instance tests, signing, and VSIX publication remain. |
+| VS Code | `zed-pkg/zed-vscode` | Pass | Pass | Partial | Dedicated repository with native multi-root tree, Problems diagnostics, commands, settings, watchers, safe CLI boundary, cross-platform CI and retained VSIX gate in PR #1. Clean extension-host testing and Marketplace publication remain. |
+| Qt Creator | `zed-pkg/zed-qtcreator` | Pass | Controller/model | Partial | Dedicated repository; PR #1 adds multi-root package projection, confirmation-gated action previews and Linux/macOS/Windows CI. `ExtensionSystem::IPlugin`, ProjectExplorer/Issues integration and clean-instance packaging remain. |
+| Xcode | `zed-pkg/zed-xcode` | Pass | Companion model | Partial | Dedicated repository; PR #1 adds a Swift multi-root companion workspace model, safe action previews, tests and macOS CI. SwiftUI app, XcodeKit appex, App Group entitlements, signing and clean Xcode tests remain. |
+| Eclipse | `zed-pkg/zed-eclipse` | Pass | Marker/model | Partial | Dedicated repository; PR #1 adds multi-root package state, Problems-marker projection, safe quick-fix previews and cross-platform CI. PDE/OSGi shell, resource listeners, UI and p2 application tests remain. |
+| Visual Studio | `zed-pkg/zed-visual-studio` | Pass | Tool-window model | Partial | Dedicated repository; PR #1 adds multi-root tool-window state, Error List projections, safe action previews and Windows CI. VS SDK `AsyncPackage`, WPF UI, experimental-instance tests and signed VSIX remain. |
 
 ## Shared conformance bar
 
 All certified live integrations and candidates are evaluated for:
 
 - multi-root package discovery;
-- manifest, lockfile, materialization, stale-lock, and interrupted-transaction
-  diagnostics;
+- manifest, lockfile, materialization, stale-lock, and interrupted-transaction diagnostics;
 - CLI availability and wrong-executable detection;
 - executable-plus-argument-vector process execution without a shell;
 - explicit working directory and bounded timeout/cancellation;
@@ -58,7 +58,7 @@ The final shared JSON inspection endpoint remains tracked in
 `zed-pkg/zed-cli#191`; integrations must not become independent dependency
 resolvers.
 
-## Merged delivery evidence
+## Merged foundation evidence
 
 | Change | Pull request | Merge commit |
 | --- | --- | --- |
@@ -67,72 +67,50 @@ resolvers.
 | Shared parity contract and five candidate implementations | `zed-pkg/.github#25` | `051c897578657f8993924f4ecd2a176f4448d404` |
 | Independent seven-editor sandbox matrix | `zed-pkg-test/zed-pkg-e2e#105` | `ee7d220807008e9222bbe80e2efbf3c39b21dfc7` |
 
-## Native candidate certification
+## Dedicated repository review heads
 
-Candidate workflow run `31048652586` passed:
+| Integration | Pull request | Exact head | Product CI |
+| --- | --- | --- | --- |
+| VS Code | `zed-pkg/zed-vscode#1` | `9754f10e44235828547cbeeb05e43c5786673af9` | run `31209922091` passed |
+| Qt Creator | `zed-pkg/zed-qtcreator#1` | `0372ccd4100e369d9e4593d3df66d8b2b507886a` | run `31209486089` passed |
+| Xcode | `zed-pkg/zed-xcode#1` | `654f96f9c1d3ee80afc3034a883cb9083caefe00` | run `31209562414` passed |
+| Eclipse | `zed-pkg/zed-eclipse#1` | `e65e8086f328a20adf3f941e1be988d0d757dc0f` | run `31209660197` passed |
+| Visual Studio | `zed-pkg/zed-visual-studio#1` | `a3520ea8aa19ecbdaa4c71e77d01af6407a7e05f` | run `31209772575` passed |
 
-- parity policy validation;
-- VS Code Node tests and VSIX packaging;
-- Qt Creator CMake build and CTest on Ubuntu;
-- Xcode Swift tests on macOS;
-- Eclipse Java 21/Maven tests;
-- Visual Studio .NET tests on Windows.
+All five product PRs are intentionally draft review candidates. Independent
+certification is in `zed-pkg-test/zed-pkg-e2e#112`, pinned to those exact full
+commit identities rather than mutable branches.
 
-VS Code retained candidate artifact:
+## Independent sandbox
 
-- artifact ID: `8947482937`;
-- outer artifact digest:
-  `sha256:d1d9ab59cca070b6b9a4ba36f14809c3131a9a755bfd5d6b03b6b6392ae3db85`;
-- inner VSIX SHA-256:
-  `5cf6bec8304cc0de2f96c71533d4c27978c6a053bc759bb67a86a42cd0f51b63`.
+The durable sandbox workflow now checks the five dedicated repositories instead
+of the earlier shared `.github/blueprints`. It retains the already-merged
+Sublime and JetBrains product checks and independently exercises:
 
-The previous opaque VS Code Git bundle was removed from certification after its
-compressed pack failed clone verification. The certified VS Code candidate is
-fully source-visible.
+- VS Code unit/repository contract tests plus VSIX packaging;
+- Qt Creator CMake/CTest on Linux, macOS and Windows;
+- Xcode Swift tests and release build on macOS;
+- Eclipse Java 21 Maven/JUnit;
+- Visual Studio .NET 8 tests on Windows;
+- the machine-readable seven-integration parity matrix.
 
-## Independent sandbox certification
-
-Test-organization workflow run `31048735205` passed all jobs against immutable
-candidate heads:
-
-- Sublime Text under Python 3.8 and 3.14, including package build and an isolated
-  fixture matrix;
-- JetBrains `check buildPlugin verifyPlugin` and plugin artifact upload;
-- VS Code tests, VSIX packaging, and artifact upload;
-- Qt Creator CMake/CTest;
-- Xcode Swift/macOS tests;
-- Eclipse Java/Maven tests;
-- Visual Studio .NET/Windows tests;
-- machine-readable parity-policy validation.
-
-The Sublime fixture matrix uses a temporary HOME and temporary workspaces. It
-covers unmanaged, lock-only, missing-lock, stale-lock, missing-materialization,
-interrupted-transaction, invalid-TOML, wrong-CLI, and multi-root cases and
-asserts that analysis does not mutate fixtures or HOME.
-
-Retained test-org artifacts:
-
-| Artifact | ID | Digest |
-| --- | ---: | --- |
-| `sandbox-jetbrains` | `8947719871` | `sha256:dddae7f19f18088dadd6d47dd8192786e20a11be6c6dee8fc725491b82fa46b9` |
-| `sandbox-vscode` | `8947511633` | `sha256:1e814606946f3a7a4fef1e56341d5e7d200d1f011b24bd3dbaaef8a9adc5e678` |
-| `sandbox-sublime-3.8` | `8947510120` | `sha256:6c801d6cee4a163f2a16734ac013655581794314ef865853b5381570e9baba21` |
-| `sandbox-sublime-3.14` | `8947509853` | `sha256:6c801d6cee4a163f2a16734ac013655581794314ef865853b5381570e9baba21` |
+The exact test-org candidate is `zed-pkg-test/zed-pkg-e2e#112` at
+`6dba5b87a9ec17d223255369a3bc9cd0ebe44d3b`. Its focused IDE sandbox workflow
+is run `31210197200`.
 
 ## Remaining promotion work
 
-The durable promotion backlog is `zed-pkg/.github#28`:
+The durable promotion backlog is `zed-pkg/.github#28`. Repository creation is
+complete. Remaining work is:
 
-1. create dedicated repositories for VS Code, Qt Creator, Xcode, Eclipse, and
-   Visual Studio;
-2. complete each missing editor-native shell;
-3. run clean editor-instance GUI tests using the editor vendor's supported test
+1. complete each remaining editor-native UI shell;
+2. run clean editor-instance GUI tests using the editor vendor's supported test
    harness or experimental instance;
-4. sign and publish VSIX, p2, app/appex, Qt Creator plugin, and Marketplace
-   artifacts;
-5. adopt the final `zed inspect` contract from `zed-cli#191`;
-6. add repositories, PRs, and distribution work to `zed-pkg-project` when
-   Projects v2 mutation access is available.
+3. sign and publish VSIX, p2, app/appex, Qt Creator plugin, Package Control and
+   Marketplace artifacts;
+4. adopt the final `zed inspect` contract from `zed-cli#191`;
+5. add repositories, PRs, and distribution work to `zed-pkg-project` when the
+   available GitHub integration exposes Projects v2 mutation access.
 
-Linear issue `DEN-2508` remains In Progress until those distribution gates are
+Linear issue `DEN-2508` remains In Progress until distribution parity is
 complete.
