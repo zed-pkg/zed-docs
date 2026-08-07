@@ -46,6 +46,7 @@ Independent executable acceptance contracts that do not consume architecture
 numbers are indexed separately. The first is the
 [`zed develop` clean-room acceptance contract](docs/zed-develop-clean-room-acceptance.md),
 which is already on `main` and remains deliberately unnumbered.
+| [23](docs/23-universal-environment-interop.md) | Flox, Devbox, mise/asdf, and scratch OCI interoperability | RFC; implementation staged |
 
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
 quotas, which remain planned. Audit logs shipped (`zed org audit`,
