@@ -104,6 +104,10 @@ The workflow has read-only repository permissions and uses immutable full commit
 identities for the product candidates. It does not mutate product branches,
 package registries, IDE state, or credentials.
 
+The same evidence is recorded in the Linear `github.com/zed-pkg-test` project
+as **IDE dedicated-repository certification — 2026-08-07**, keeping production
+planning and independent certification ownership explicit.
+
 ## Remaining promotion work
 
 The durable promotion backlog is `zed-pkg/.github#28`. Repository creation is
