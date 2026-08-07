@@ -8,6 +8,8 @@ Canonical planning:
 
 - Linear Zed issue: `DEN-2591`
 - Linear flags2env issue: `DEN-2581`
+- Documentation tracking issue: `zed-pkg/zed-docs#54`
+- Documentation delivery PR: `zed-pkg/zed-docs#55`
 - Zed merge: `ad6ff369a763f0fbdc3b677894655c73b23e062c`
 - flags2env merge: `8a978aef0cc9b12bdd0791d93bbf3a374c517ee2`
 
