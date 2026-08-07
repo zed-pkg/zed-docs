@@ -10,6 +10,7 @@ The current implementation is in `zed-cli`. The reusable cross-platform lock
 boundary is being extracted into `zed-pkg/zed-lock` under
 [DEN-2076](https://linear.app/denman/issue/DEN-2076/zed-lock-create-event-driven-cross-platform-process-lock-library-and).
 The canonical extraction design is [doc 31](31-zed-lock-evented-cross-platform-locking.md).
+The canonical extraction design is [doc 28](28-zed-lock-evented-cross-platform-locking.md).
 
 ## Design
 
@@ -206,6 +207,7 @@ landed, not merely proposed by historical pull-request pages.
 
 See also [24 — recursive installs and artifact locking](24-recursive-installs-and-artifact-locking.md)
 and [31 — zed-lock evented cross-platform locking](31-zed-lock-evented-cross-platform-locking.md).
+and [28 — zed-lock evented cross-platform locking](28-zed-lock-evented-cross-platform-locking.md).
 
 ## Required regressions
 

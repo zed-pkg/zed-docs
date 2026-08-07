@@ -36,6 +36,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [26](docs/26-deterministic-nix-export-bundles.md) | Pure deterministic Zed → Nix flake-bundle rendering contract | implementation under review |
 | [27](docs/27-durable-first-install-manifests.md) | Durable `.zpkg.toml` creation on first dependency install | implemented; Node + Go/Python/Rust certified on Linux/macOS |
 | [28](docs/28-universal-environment-interop.md) | Flox, Devbox, mise/asdf, and scratch OCI interoperability | RFC; executable policy validated |
+| [28](docs/28-zed-lock-evented-cross-platform-locking.md) | `zed-lock`: helper-thread async adapters over kernel-backed cross-process locks | architecture approved; extraction tracked |
 | [29](docs/29-native-dependencies-and-install-hooks.md) | Native prerequisites, install hooks, consent boundaries, staging, caching, and Nix purity | manifest contract implemented; installer lifecycle under review |
 | [30](docs/30-submodules-zed-packages-and-composition.md) | Git submodules vs Zed packages, workspaces, release composition, and deployment boundaries | operational policy; pack guard under review |
 | [31](docs/31-zed-lock-evented-cross-platform-locking.md) | `zed-lock`: helper-thread async adapters over kernel-backed cross-process locks | architecture approved; extraction tracked |

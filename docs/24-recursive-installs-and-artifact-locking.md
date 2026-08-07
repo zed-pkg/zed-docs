@@ -156,6 +156,7 @@ Accordingly:
 
 The canonical standalone extraction contract is
 [31 — zed-lock evented cross-platform locking](31-zed-lock-evented-cross-platform-locking.md).
+[28 — zed-lock evented cross-platform locking](28-zed-lock-evented-cross-platform-locking.md).
 The helper-thread prototype and expanded conformance coverage landed in
 [`zed-pkg/zed-cli#178`](https://github.com/zed-pkg/zed-cli/pull/178).
 
@@ -406,3 +407,4 @@ See also [1 — content-addressable storage + symlinks](01-cas-and-symlinks.md),
 [2 — store/project bridge under OCI](02-store-project-bridge-oci.md),
 [6 — process-level locking](06-process-locking.md), and
 [31 — zed-lock evented cross-platform locking](31-zed-lock-evented-cross-platform-locking.md).
+[28 — zed-lock evented cross-platform locking](28-zed-lock-evented-cross-platform-locking.md).
