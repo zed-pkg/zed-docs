@@ -81,22 +81,28 @@ All five product PRs are intentionally draft review candidates. Independent
 certification is in `zed-pkg-test/zed-pkg-e2e#112`, pinned to those exact full
 commit identities rather than mutable branches.
 
-## Independent sandbox
+## Independent dedicated-repository sandbox
 
 The durable sandbox workflow now checks the five dedicated repositories instead
-of the earlier shared `.github/blueprints`. It retains the already-merged
-Sublime and JetBrains product checks and independently exercises:
+of the earlier shared `.github/blueprints`. Test candidate
+`6dba5b87a9ec17d223255369a3bc9cd0ebe44d3b` in
+`zed-pkg-test/zed-pkg-e2e#112` was certified by focused run `31210197200`.
 
-- VS Code unit/repository contract tests plus VSIX packaging;
-- Qt Creator CMake/CTest on Linux, macOS and Windows;
-- Xcode Swift tests and release build on macOS;
+**Run `31210197200` passed every job:**
+
+- policy/machine-readable parity matrix validation;
+- Sublime Python 3.8 and 3.14 tests, isolated fixtures, package builds, and
+  artifact uploads;
+- JetBrains `check buildPlugin verifyPlugin` and artifact upload;
+- VS Code unit/repository-contract tests, VSIX packaging, and artifact upload;
 - Eclipse Java 21 Maven/JUnit;
+- Xcode Swift tests and release build on macOS;
 - Visual Studio .NET 8 tests on Windows;
-- the machine-readable seven-integration parity matrix.
+- Qt Creator CMake/CTest on Linux, macOS, and Windows.
 
-The exact test-org candidate is `zed-pkg-test/zed-pkg-e2e#112` at
-`6dba5b87a9ec17d223255369a3bc9cd0ebe44d3b`. Its focused IDE sandbox workflow
-is run `31210197200`.
+The workflow has read-only repository permissions and uses immutable full commit
+identities for the product candidates. It does not mutate product branches,
+package registries, IDE state, or credentials.
 
 ## Remaining promotion work
 
