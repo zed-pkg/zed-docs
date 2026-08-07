@@ -41,6 +41,7 @@ in order. Where a design is already implemented, the doc links to the code.
 | [31](docs/31-zed-lock-evented-cross-platform-locking.md) | `zed-lock`: helper-thread async adapters over kernel-backed cross-process locks | architecture approved; extraction tracked |
 | [32](docs/32-org-repository-package-pattern.md) | Organization clients/interfaces/lib/CLI/monorepo package pattern and fleet audit | operational policy; rollout audited |
 | [33](docs/33-github-linear-project-registry.md) | Canonical GitHub organization, Linear project, GitHub Project, and artifact ownership registry | operational policy; Projects permission blocked |
+| [34](docs/34-terminal-shell-context.md) | Terminal/TTY/shell context, prompt safety, and cross-platform certification | implemented; Linux/macOS/Windows certified |
 
 Independent executable acceptance contracts that do not consume architecture
 numbers are indexed separately. The first is the
