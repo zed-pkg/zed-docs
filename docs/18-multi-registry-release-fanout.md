@@ -69,10 +69,18 @@ forge mirrors, and exact VCS tags without reading credentials or uploading.
 credential environment variables removed. Arbitrary manifest shell commands
 are not part of this model.
 
+`[targets.<language>.native] channel` optionally pins a route to a pre-release
+track. The version is not spelled in the manifest: how a channel becomes a
+version string differs per ecosystem, so it is resolved at plan time. See
+[doc 34](34-native-registry-hosts-and-release-channels.md).
+
 ### Package-registry compatibility
 
 The forge entry means “publish the same native package format to this forge's
-package registry.” It does not mean “put every language into every forge”:
+package registry.” It does not mean “put every language into every forge.” The
+same field also accepts the enterprise binary repositories — Artifactory,
+Nexus, AWS CodeArtifact, Cloudsmith, Azure Artifacts — which re-serve the same
+wire protocols at an organization's own base URL:
 
 | Native format | Canonical destination | GitHub Packages | GitLab | Bitbucket Packages |
 | --- | --- | --- | --- | --- |
@@ -87,9 +95,9 @@ package registry.” It does not mean “put every language into every forge”:
 | Dart/Flutter | pub.dev | no | no | no |
 
 The interface validates this matrix and rejects duplicate or impossible
-provider/format pairs during manifest parsing. Support here means the route can
-be represented and planned; authenticated upload adapters are a later,
-separately reviewed boundary.
+provider/format pairs during manifest parsing. Compatibility is keyed on the
+wire protocol rather than the registry name, so a mirror that serves Maven
+serves Clojars-shaped artifacts without a new table entry.
 
 ## GitHub, GitLab, and Bitbucket source mirrors
 
@@ -154,9 +162,17 @@ Implemented now:
 - deterministic `zed release plan` output;
 - credential-free native package-manager preflight where packages are already self-contained.
 
+Native registry adapters now reach each ecosystem over its own HTTP API rather
+than through that language's package manager, so a polyglot release job no
+longer needs every toolchain installed. `zed release publish` and
+`zed release versions` are the entry points; see
+[doc 34](34-native-registry-hosts-and-release-channels.md) for the host,
+protocol, and channel contract and for the cases still outstanding.
+
 Still follow-up work:
 
-- authenticated native registry adapters;
+- multi-request native publishes (pub.dev, Maven Central Portal, Conan);
+- native-manifest cross-checks beyond the original nine ecosystems;
 - release-set attestations and provenance aggregation;
 - generic target-only forge mirror automation;
 - publishable interface packages for repositories whose clients still depend on private sibling paths.

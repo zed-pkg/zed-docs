@@ -1,0 +1,165 @@
+# 34. Native registry hosts and release channels
+
+[Doc 18](18-multi-registry-release-fanout.md) establishes that native
+registries are distribution mirrors of one reviewed source commit. It says
+where a target goes. This document says how zed gets it there, and how a
+release candidate is expressed once it arrives.
+
+## Registries, not package managers
+
+Zed reaches a native registry over that registry's own HTTP API. It does not
+drive `npm publish`, `gem push`, `cabal upload`, or `twine`.
+
+That is a deliberate boundary, and it is not the same boundary as validation.
+Package-manager binaries remain the right tool for *validating* a package:
+`npm pack` and `cargo package` encode packing rules that should not be
+reimplemented, and `zed release preflight` still runs them where a toolchain is
+present. They are the wrong tool for *reaching* a registry:
+
+- every publish target would become a toolchain zed must install, pin, and keep
+  on `PATH`;
+- a polyglot repository's release job would need every toolchain at once;
+- zed would be capped at the ecosystems whose CLI happens to be installed. A
+  Haskell client cannot be published from a runner with no GHC.
+
+The APIs are stable, documented, and toolchain-free. What zed needs from them is
+narrow: list a package's versions, fetch one, and upload an artifact that has
+already been built and validated.
+
+## Three axes
+
+`zed-interfaces::native_host` keeps three facts apart because they vary
+independently.
+
+**`NativeHost`** — the concrete registry, 29 of them. Includes the ones that
+store no artifact: Zig, whose dependencies are URLs pinned by hash; a plain Git
+or Mercurial remote on GitHub, GitLab, or Bitbucket, which zed supports
+first-class; and Go's proxy, which caches what a VCS tag already published. A
+release plan still has to name where those come from.
+
+**`RegistryProtocol`** — the wire protocol, 22 of them. Hosts outnumber
+protocols on purpose. Clojars and Maven Central both serve Maven 2. PyPI and
+TestPyPI are one protocol at two hosts. Every mirror in `UniversalHost`
+(Artifactory, Nexus, GitHub/GitLab/Bitbucket Packages, AWS CodeArtifact,
+Cloudsmith, Azure Artifacts) re-serves an existing protocol at a different base
+URL. One client implementation therefore serves many hosts, which is why the
+axis exists at all.
+
+Mirror compatibility keys on the *artifact format*, not the ingest protocol.
+Maven Central's Central Portal upload — a zipped bundle plus a deployment poll —
+describes only how Central accepts a release; the artifact is an ordinary Maven
+jar that every Maven-hosting mirror serves.
+
+**`ReleaseChannel`** — `stable`, `rc`, `beta`, `alpha`, `nightly`, `snapshot`.
+
+## Why a channel is not a version suffix
+
+Every one of these is a real, mutually incompatible way to ship a candidate:
+
+| Host | A release candidate is… |
+| --- | --- |
+| npm | a SemVer prerelease **and** a dist-tag that is not `latest` |
+| Hackage | a different endpoint (`/packages/candidates/`) |
+| Maven | `-SNAPSHOT` in a different **repository** from releases |
+| PyPI | PEP 440 (`1.4.0rc1`) — which is not valid SemVer |
+| RubyGems | any letter anywhere in the version |
+| Conan | part of the package reference, not the version |
+| CPAN | a TRIAL release, marked by an underscore |
+| crates.io | a SemVer prerelease, and nothing else — there is no channel |
+
+Generalizing from any one of these produces an artifact the next host rejects,
+or — worse — silently promotes a candidate to stable and moves every unpinned
+consumer. `NativeHost::channel_route` resolves the triple
+(host, channel, base version) into the exact version, dist-tag, and endpoint a
+publish will use, so no caller re-derives any of it.
+
+A host with no candidate track — CRAN, opam, LuaRocks, Racket, the PowerShell
+Gallery, Stackage — **rejects** one. Failing the plan by target name is the
+whole point: publishing a candidate as stable is the outcome worth preventing.
+
+`snapshot` is the one mutable channel. Maven `-SNAPSHOT`, Packagist `dev-*`, and
+LuaRocks `dev` are republished at one coordinate by design, so the doc-18
+invariant that rejects same-version/different-content output is relaxed there
+and only there.
+
+## Commands
+
+```sh
+zed release plan --channel rc --iteration 2 --json
+zed release publish --channel rc --iteration 2 --dry-run
+zed release versions --target python
+```
+
+`--dry-run` prints the exact request each route would send — verb, URL, headers,
+body shape — and sends nothing. It is the same construction path a real run
+takes, so a dry run that looks right is evidence the real one will be.
+
+One `--channel rc` resolves to four different version strings across a
+four-language repository:
+
+| target | host | version | dist-tag |
+| --- | --- | --- | --- |
+| `nodejs` | npm | `1.4.0-rc.2` | `rc` |
+| `python` | PyPI | `1.4.0rc2` | — |
+| `java` | Clojars | `1.4.0-RC2` | — |
+| `ruby` | RubyGems | `1.4.0.rc.2` | — |
+
+The release set still shares one source version and one Git tag. The channel
+changes the destination, not the commit being released.
+
+A route may pin its own default track in the manifest, for a client generated
+from an API surface that is not yet stable:
+
+```toml
+[targets.nodejs.native]
+registry = "npm"
+package = "@acme/client"
+channel = "beta"
+```
+
+An explicit `--channel` overrides it, so the same repository can still cut a
+real release.
+
+## Credentials
+
+Credentials are read from environment variables only — the same ones the
+ecosystem's own tooling reads, plus a `ZED_*` override that takes priority so a
+repository publishing to two npm registries can redirect one without unsetting
+the other. Zed does not consult credential helpers or ambient logins: a publish
+token must be an explicit input.
+
+A host that publishes by VCS tag has no registry credential and is never asked
+for one. Prompting for a token that is never used is how a CI job ends up with
+an unnecessary secret in scope.
+
+Credentials never reach a printable string. They are carried as a secret-typed
+header value whose only `Display` implementation redacts them, and that covers
+LuaRocks and Packagist too — both put the token in the URL rather than a header,
+so redaction is positional. Matching on the token *value* would fail open,
+because a token is opaque.
+
+## Current implementation boundary
+
+Implemented:
+
+- 29 hosts and 22 protocols, with endpoints, auth schemes, and channel rules;
+- channel resolution, including endpoint moves and dist-tags;
+- enterprise and forge mirrors keyed on protocol compatibility;
+- version listing and download-URL construction for the protocols with a
+  machine-readable per-package index;
+- single-request uploads, with credential redaction and `--dry-run`.
+
+Not yet, and typed rather than silent:
+
+- **multi-request publishes** — pub.dev's signed-upload handshake, the Maven
+  Central Portal's bundle-then-poll, and Conan's create-revision-then-upload
+  return an error naming the missing step;
+- **indexes with no per-package endpoint** — LuaRocks (its manifest is a Lua
+  table), ConanCenter, the Julia General registry, and opam return an error
+  saying why;
+- **native-manifest cross-checks** beyond the original nine ecosystems. Those
+  routes are planned and published, but the native manifest's own name and
+  version are not compared against the route. Manifest parsing still rejects an
+  invalid package identity before a plan is emitted;
+- **release-set attestations** covering native uploads, which doc 18 already
+  lists as follow-up work.
