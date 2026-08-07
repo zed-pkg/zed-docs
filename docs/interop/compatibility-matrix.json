@@ -1,6 +1,7 @@
 {
   "schema": "zed.interop-matrix/v1",
   "rfc": "docs/28-universal-environment-interop.md",
+  "rfc": "docs/24-universal-environment-interop.md",
   "core_invariants": {
     "zed_is_package_graph_resolver": true,
     "exact_versions_in_frozen_state": true,

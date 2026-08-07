@@ -1,6 +1,7 @@
 # Executable interoperability policy
 
 The normative design is [RFC 28](../28-universal-environment-interop.md). This
+The normative design is [RFC 24](../24-universal-environment-interop.md). This
 directory turns its cross-ecosystem invariants into a small machine-checked
 contract so documentation and implementation PRs cannot silently disagree.
 
@@ -38,6 +39,7 @@ The validator uses only Python's standard library. It fails when:
 - Docker and Podman diverge from the same OCI image-layout model;
 - scratch images stop being restricted to verified static outputs; or
 - RFC 28 loses one of the normative invariants referenced by the matrix.
+- RFC 24 loses one of the normative invariants referenced by the matrix.
 
 The GitHub Actions workflow runs read-only, pins third-party Actions to immutable
 commits, disables Python bytecode output, and retains the matrix plus its SHA-256

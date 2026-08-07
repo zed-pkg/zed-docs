@@ -50,6 +50,7 @@ numbers are indexed separately. The first is the
 which is already on `main` and remains deliberately unnumbered.
 | [23](docs/23-universal-environment-interop.md) | Flox, Devbox, mise/asdf, and scratch OCI interoperability | RFC; implementation staged |
 | [24](docs/24-deterministic-nix-export-bundles.md) | Pure deterministic Zed → Nix flake-bundle rendering contract | implementation under review |
+| [24](docs/24-universal-environment-interop.md) | Flox, Devbox, mise/asdf, and scratch OCI interoperability | RFC; first contract slice in review |
 
 <sub>\* Enterprise features are implemented except SSO and per-org **storage**
 quotas, which remain planned. Audit logs shipped (`zed org audit`,
