@@ -1,16 +1,4 @@
 {
-  "schema": "zed.interop-matrix/v1",
-  "rfc": "docs/28-universal-environment-interop.md",
-  "rfc": "docs/24-universal-environment-interop.md",
-  "core_invariants": {
-    "zed_is_package_graph_resolver": true,
-    "exact_versions_in_frozen_state": true,
-    "build_metadata_is_platform_identity": false,
-    "published_version_bytes_are_mutable": false,
-    "generated_activation_command": "zed install --frozen",
-    "plan_is_credential_free": true,
-    "apply_revalidates_plan": true
-  },
   "adapters": [
     {
       "id": "nix",
@@ -159,5 +147,16 @@
       "same_version_changed_bytes_allowed": false,
       "notes": "Cargo requirement syntax is translated source-aware before one exact lock version is selected."
     }
-  ]
+  ],
+  "core_invariants": {
+    "zed_is_package_graph_resolver": true,
+    "exact_versions_in_frozen_state": true,
+    "build_metadata_is_platform_identity": false,
+    "published_version_bytes_are_mutable": false,
+    "generated_activation_command": "zed install --frozen",
+    "plan_is_credential_free": true,
+    "apply_revalidates_plan": true
+  },
+  "rfc": "docs/24-universal-environment-interop.md",
+  "schema": "zed.interop-matrix/v1"
 }
