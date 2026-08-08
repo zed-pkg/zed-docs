@@ -60,13 +60,13 @@ resolvers.
 
 ## Final dedicated-repository review graph
 
-| Integration | Pull request | Final exact head | Last substantive green evidence |
+| Integration | Pull request | Final exact head | Exact-head green evidence |
 | --- | --- | --- | --- |
-| VS Code | `zed-pkg/zed-vscode#1` | `c1d3318a2cf8cd717f9b0af67117ddbac3e28d2e` | code/locked-build head `96c0789a446891d5cb502be799ed121930aee9d1`, run `31238760837` passed Linux/macOS/Windows tests, `npm ci`, clean Extension Host, VSIX package/artifact; final head adds only conformance metadata and run `31239054128` was queued at last observation |
-| Qt Creator | `zed-pkg/zed-qtcreator#1` | `8e7958c7c85a305b59accfe82c28e7ff42bfecba` | hardened implementation head `1780ee33eaf8ba3b5fffa8ce3ccc8fb2efea308e`, run `31238398562` passed; final head adds conformance metadata and run `31239125093` was queued |
-| Xcode | `zed-pkg/zed-xcode#1` | `9b9304fee2ff236fc59407ddd97cc2c01225a69d` | hardened implementation head `e7e7030fa44496c14de7da684772c4113cfdd92f`, run `31238409074` passed; final head adds conformance metadata and run `31239129386` was queued |
-| Eclipse | `zed-pkg/zed-eclipse#1` | `246b46048cced1d1072afd3bedc9849efe3a8a8f` | hardened implementation head `58394c48e704f041bb29be7e9079806e25abd41e`, run `31238416607` passed; final head adds conformance metadata and rerun was queued/pending |
-| Visual Studio | `zed-pkg/zed-visual-studio#1` | `d85a9c827140426a8d9401b5c269ff36f591a299` | hardened implementation head `4c4141d3ed595fd2b6a331a5a8756f1ed0cde455`, run `31238426829` passed; final head adds conformance metadata and rerun was queued/pending |
+| VS Code | `zed-pkg/zed-vscode#1` | `c1d3318a2cf8cd717f9b0af67117ddbac3e28d2e` | run `31239054128` passed Linux/macOS/Windows tests, locked `npm ci`, clean Extension Development Host, VSIX packaging and artifact upload |
+| Qt Creator | `zed-pkg/zed-qtcreator#1` | `8e7958c7c85a305b59accfe82c28e7ff42bfecba` | run `31239125093` passed fixed Linux/macOS/Windows CMake/CTest CI |
+| Xcode | `zed-pkg/zed-xcode#1` | `9b9304fee2ff236fc59407ddd97cc2c01225a69d` | run `31239129386` passed fixed macOS 15 Swift CI |
+| Eclipse | `zed-pkg/zed-eclipse#1` | `246b46048cced1d1072afd3bedc9849efe3a8a8f` | run `31239136280` passed immutable/fixed-runner Maven/JUnit CI |
+| Visual Studio | `zed-pkg/zed-visual-studio#1` | `d85a9c827140426a8d9401b5c269ff36f591a299` | run `31239141244` passed fixed Windows 2025 .NET CI |
 
 There are no unresolved inline review threads on the five product PRs.
 
@@ -82,10 +82,16 @@ diagnostics, and proves refresh creates neither `.zpkg.lock` nor `zed_modules`.
 `npm ci`. The one-shot write-enabled lock materializer was removed after the
 lock was committed.
 
+Exact-head Actions artifact `9016582558` has archive digest
+`sha256:4d84f32c1bd7a267cff9fdad966a7a84cdfa4bdc80731143e0b175e4b18fc5a0`.
+The contained `zed-package-insights.vsix` has SHA-256
+`551d2376388c073d2f34c89f9a3ed0d83d786f4695fb5e9f33084f3e5e9f08ca` and
+packages extension version `0.1.0` for publisher `zed-pkg` under the MIT license.
+
 ## Independent final-head sandbox
 
-Draft `zed-pkg-test/zed-pkg-e2e#112` head
-`137488d511e45bea72a933805681bec5d5a6339c` pins exactly:
+Draft `zed-pkg-test/zed-pkg-e2e#112` now has head
+`0c55eb576a18ca5946b7ffe5d28b9167a37a3f67` and pins exactly:
 
 - VS Code `c1d3318a2cf8cd717f9b0af67117ddbac3e28d2e`;
 - Qt Creator `8e7958c7c85a305b59accfe82c28e7ff42bfecba`;
@@ -93,15 +99,21 @@ Draft `zed-pkg-test/zed-pkg-e2e#112` head
 - Eclipse `246b46048cced1d1072afd3bedc9849efe3a8a8f`;
 - Visual Studio `d85a9c827140426a8d9401b5c269ff36f591a299`.
 
+The focused final-product sandbox run `31239171374` passed on the immediately
+preceding test head that pins these same five product SHAs. The test harness now
+also explicitly reviews three package namespaces: `zed-pkg-test`, legacy
+`zedtest`, and upstream `zed-pkg`. The upstream namespace is required by the two
+intentional source mirrors `zed-interfaces` and `zed-lib`; their manifests are
+preserved rather than rewritten for the test organization.
+
+A refreshed exact-head IDE sandbox run `31240156191` and organization-inventory
+run `31240156197` are queued/running for the current test head. Final independent
+certification is recorded only after those runs are terminal-successful.
+
 The sandbox pins every third-party Action by full commit SHA, uses fixed runner
 images, disables persisted checkout credentials, uses `npm ci`, runs the VS Code
 clean host, and contains a policy ratchet rejecting mutable Actions/runners/tool
 resolution and candidate/matrix drift.
-
-Fresh focused run `31239171374` was queued in the shared `zed-pkg-test` runner
-pool at last observation. The earlier dedicated-repository run `31210197200`
-passed all jobs on predecessor heads and is supporting evidence only, not final-
-head certification.
 
 ## Remaining promotion work
 
