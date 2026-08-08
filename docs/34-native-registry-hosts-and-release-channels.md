@@ -185,17 +185,35 @@ Implemented:
   machine-readable per-package index;
 - single-request uploads, with credential redaction and `--dry-run`.
 
+Multi-request publishes, for the two hosts that need them:
+
+- **pub.dev** — three requests. Ask for a signed upload form, post the archive to
+  wherever that form points (object storage, not pub.dev), then fetch the
+  finalize URL the upload returns in `Location`. The middle request is
+  deliberately unauthenticated: the signed form *is* the authorization, and
+  replaying the pub.dev token to a third-party storage origin would hand it to
+  whatever host the grant names.
+- **Maven Central Portal** — upload a bundle, then poll the deployment. A `201`
+  from the upload means "accepted for validation", not "published"; reporting
+  success there would tell a release job a version exists that Central may
+  reject minutes later.
+
 Not yet, and typed rather than silent:
 
-- **multi-request publishes** — pub.dev's signed-upload handshake, the Maven
-  Central Portal's bundle-then-poll, and Conan's create-revision-then-upload
-  return an error naming the missing step;
+- **Conan's create-revision-then-upload** returns an error naming the missing
+  step. ConanCenter accepts no uploads at all — its recipes arrive by pull
+  request — so this only matters through an Artifactory mirror;
 - **indexes with no per-package endpoint** — LuaRocks (its manifest is a Lua
   table), ConanCenter, the Julia General registry, and opam return an error
   saying why;
-- **native-manifest cross-checks** beyond the original nine ecosystems. Those
-  routes are planned and published, but the native manifest's own name and
-  version are not compared against the route. Manifest parsing still rejects an
-  invalid package identity before a plan is emitted;
+- **native-manifest cross-checks** beyond Hex and the original nine ecosystems.
+  A route zed cannot check is *reported* rather than passed quietly —
+  `zed release plan` prints an `unchecked` line naming the target and the reason
+  — because "nothing was verified" and "everything matched" must not look the
+  same to whoever is cutting the release. Two cases are inherent rather than
+  unfinished: JVM coordinates in Gradle, sbt, Leiningen, or deps.edn, and BEAM
+  coordinates in `mix.exs` or `rebar.config`, all live in executable build code
+  with nothing to parse. Gleam is the one BEAM manifest that is data
+  (`gleam.toml`), so it is checked;
 - **release-set attestations** covering native uploads, which doc 18 already
   lists as follow-up work.
