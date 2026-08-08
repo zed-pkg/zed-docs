@@ -25,42 +25,28 @@ distribution bar.
    artifacts, clean editor-instance tests, signing, and marketplace or update-
    channel publication.
 
-An integration is described as fully user-facing parity only after all three
-levels pass.
-
 ## Current comparison
 
 | Integration | Repository | Core | Native shell | Distribution | Current position |
 | --- | --- | --- | --- | --- | --- |
-| Sublime Text | `zed-pkg/zed-sublimetext` | Pass | Pass | Partial | Live integration; multi-root parity, staging recovery, confirmation gates, deterministic `.sublime-package`, and independent Python 3.8/3.14 sandbox certification pass. Clean-profile platform verification and Package Control publication remain. |
-| JetBrains / IntelliJ | `zed-pkg/zed-intellij` | Pass | Pass | Partial | Live integration; plugin verifier, package-state tool window/diagnostics, multi-package discovery, output redaction, wrong-launcher detection, staging recovery, and independent sandbox certification pass. Marketplace/clean-instance publication evidence remains. |
-| VS Code | `zed-pkg/zed-vscode` | Pass | Pass | Partial | Dedicated repository with multi-root tree, Problems diagnostics, commands, settings, watchers, confirmation gates, clean Extension Development Host coverage, a committed npm lock, immutable Actions, fixed runner images, and retained VSIX packaging. Marketplace signing/publication and the final shared inspect schema remain. |
-| Qt Creator | `zed-pkg/zed-qtcreator` | Pass | Controller/model | Partial | Dedicated repository; PR #1 adds multi-root package projection, confirmation-gated action previews, fixed runners and immutable checkout inputs. `ExtensionSystem::IPlugin`, ProjectExplorer/Issues integration and clean-instance packaging remain. |
-| Xcode | `zed-pkg/zed-xcode` | Pass | Companion model | Partial | Dedicated repository; PR #1 adds a Swift multi-root companion workspace model, safe action previews, fixed macOS runner and immutable checkout. SwiftUI app, XcodeKit appex, App Group entitlements, signing and clean Xcode tests remain. |
-| Eclipse | `zed-pkg/zed-eclipse` | Pass | Marker/model | Partial | Dedicated repository; PR #1 adds multi-root package state, Problems-marker projection, safe quick-fix previews, fixed runners and immutable Actions. PDE/OSGi shell, resource listeners, UI and p2 application tests remain. |
-| Visual Studio | `zed-pkg/zed-visual-studio` | Pass | Tool-window model | Partial | Dedicated repository; PR #1 adds multi-root tool-window state, Error List projections, safe action previews, fixed Windows runner and immutable Actions. VS SDK `AsyncPackage`, WPF UI, experimental-instance tests and signed VSIX remain. |
+| Sublime Text | `zed-pkg/zed-sublimetext` | Pass | Pass | Partial | Live; clean-profile platform evidence and Package Control publication remain. |
+| JetBrains / IntelliJ | `zed-pkg/zed-intellij` | Pass | Pass | Partial | Live; Marketplace/clean-instance evidence remains. |
+| VS Code | `zed-pkg/zed-vscode` | Pass | Pass | Partial | Dedicated repo, committed npm lock, immutable/fixed CI, clean Extension Development Host, and retained VSIX are implemented. Final shared inspect schema plus Marketplace signing/publication remain. |
+| Qt Creator | `zed-pkg/zed-qtcreator` | Pass | Controller/model | Partial | Dedicated repo with immutable/fixed CI. `ExtensionSystem::IPlugin`, ProjectExplorer/Issues integration, clean instance and signed package remain. |
+| Xcode | `zed-pkg/zed-xcode` | Pass | Companion model | Partial | Dedicated repo with immutable/fixed macOS CI. SwiftUI app, XcodeKit appex, App Group/signing and clean Xcode tests remain. |
+| Eclipse | `zed-pkg/zed-eclipse` | Pass | Marker/model | Partial | Dedicated repo with immutable/fixed CI. PDE/OSGi UI/application tests and p2 publication remain. |
+| Visual Studio | `zed-pkg/zed-visual-studio` | Pass | Tool-window model | Partial | Dedicated repo with immutable Windows CI. VS SDK/WPF shell, experimental-instance tests and signed VSIX remain. |
 
 ## Shared conformance and supply-chain bar
 
-All certified live integrations and candidates are evaluated for:
-
-- multi-root package discovery;
-- manifest, lockfile, materialization, stale-lock, and interrupted-transaction diagnostics;
-- CLI availability and wrong-executable detection;
-- executable-plus-argument-vector process execution without a shell;
-- explicit working directory and bounded timeout/cancellation;
-- token, authorization, password, secret, API-key, and GitHub-token redaction;
-- versioned `zed inspect --workspace <absolute-root> --json` adaptation;
-- deterministic read-only fallback when the inspection endpoint is unavailable;
-- rejection of command actions that do not require explicit confirmation;
-- native unit/toolchain tests and retained artifacts where packageable;
-- fixed hosted-runner images instead of `*-latest` labels for review gates;
-- third-party Actions pinned to full commit identities;
-- checkout credentials not persisted for read-only certification;
-- committed dependency locks for package-build toolchains where applicable.
+Certified review candidates require multi-root/state diagnostics, argv-only
+execution, bounded runtime, redaction, explicit mutation confirmation,
+deterministic fallback, native tests, fixed hosted-runner images, full-SHA
+third-party Actions, unpersisted checkout credentials, and committed dependency
+locks for package-build toolchains where applicable.
 
 The final shared JSON inspection endpoint remains tracked in
-`zed-pkg/zed-cli#191`; integrations must not become independent dependency
+`zed-pkg/zed-cli#191`; IDE integrations must not become independent dependency
 resolvers.
 
 ## Merged foundation evidence
@@ -69,80 +55,63 @@ resolvers.
 | --- | --- | --- |
 | Sublime multi-root and conformance parity | `zed-pkg/zed-sublimetext#3` | `c3153867dff0b560946c9b7e287ed50366b87e6c` |
 | JetBrains safety and staging parity | `zed-pkg/zed-intellij#2` | `7282fdbc7046bb2ba58369b59ef627211033e145` |
-| Shared parity contract and five candidate implementations | `zed-pkg/.github#25` | `051c897578657f8993924f4ecd2a176f4448d404` |
-| Initial independent seven-editor sandbox matrix | `zed-pkg-test/zed-pkg-e2e#105` | `ee7d220807008e9222bbe80e2efbf3c39b21dfc7` |
+| Shared parity contract and candidate implementations | `zed-pkg/.github#25` | `051c897578657f8993924f4ecd2a176f4448d404` |
+| Initial independent seven-editor sandbox | `zed-pkg-test/zed-pkg-e2e#105` | `ee7d220807008e9222bbe80e2efbf3c39b21dfc7` |
 
-## Dedicated repository review heads
+## Final dedicated-repository review graph
 
-| Integration | Pull request | Current exact head | Current evidence |
+| Integration | Pull request | Final exact head | Last substantive green evidence |
 | --- | --- | --- | --- |
-| VS Code | `zed-pkg/zed-vscode#1` | `96c0789a446891d5cb502be799ed121930aee9d1` | predecessor `5171a9a7b38f8aca1a403894499bda8b79d46eb1` passed run `31238551321`, including clean Extension Development Host and VSIX; final lock-only/read-only head run `31238760837` queued at last observation |
-| Qt Creator | `zed-pkg/zed-qtcreator#1` | `1780ee33eaf8ba3b5fffa8ce3ccc8fb2efea308e` | immutable/fixed-runner CI `31238398562` passed |
-| Xcode | `zed-pkg/zed-xcode#1` | `e7e7030fa44496c14de7da684772c4113cfdd92f` | immutable/fixed-runner CI `31238409074` passed |
-| Eclipse | `zed-pkg/zed-eclipse#1` | `58394c48e704f041bb29be7e9079806e25abd41e` | immutable/fixed-runner CI `31238416607` passed |
-| Visual Studio | `zed-pkg/zed-visual-studio#1` | `4c4141d3ed595fd2b6a331a5a8756f1ed0cde455` | immutable/fixed-runner CI `31238426829` passed |
+| VS Code | `zed-pkg/zed-vscode#1` | `c1d3318a2cf8cd717f9b0af67117ddbac3e28d2e` | code/locked-build head `96c0789a446891d5cb502be799ed121930aee9d1`, run `31238760837` passed Linux/macOS/Windows tests, `npm ci`, clean Extension Host, VSIX package/artifact; final head adds only conformance metadata and run `31239054128` was queued at last observation |
+| Qt Creator | `zed-pkg/zed-qtcreator#1` | `8e7958c7c85a305b59accfe82c28e7ff42bfecba` | hardened implementation head `1780ee33eaf8ba3b5fffa8ce3ccc8fb2efea308e`, run `31238398562` passed; final head adds conformance metadata and run `31239125093` was queued |
+| Xcode | `zed-pkg/zed-xcode#1` | `9b9304fee2ff236fc59407ddd97cc2c01225a69d` | hardened implementation head `e7e7030fa44496c14de7da684772c4113cfdd92f`, run `31238409074` passed; final head adds conformance metadata and run `31239129386` was queued |
+| Eclipse | `zed-pkg/zed-eclipse#1` | `246b46048cced1d1072afd3bedc9849efe3a8a8f` | hardened implementation head `58394c48e704f041bb29be7e9079806e25abd41e`, run `31238416607` passed; final head adds conformance metadata and rerun was queued/pending |
+| Visual Studio | `zed-pkg/zed-visual-studio#1` | `d85a9c827140426a8d9401b5c269ff36f591a299` | hardened implementation head `4c4141d3ed595fd2b6a331a5a8756f1ed0cde455`, run `31238426829` passed; final head adds conformance metadata and rerun was queued/pending |
 
-All five product PRs remain draft review candidates. There are no unresolved
-inline review threads on these PRs.
+There are no unresolved inline review threads on the five product PRs.
 
-## VS Code clean-host and locked-build evidence
+## VS Code clean-host and locked-build gate
 
-The VS Code review branch now includes a clean Extension Development Host test
-using a disposable workspace, disposable user-data directory and a deliberately
-missing CLI path. The test proves activation, command registration, fallback
-Problems diagnostics, and no creation of `.zpkg.lock` or `zed_modules`.
+The VS Code branch launches a disposable Extension Development Host with a
+disposable user-data directory and fixture workspace, forces an unavailable CLI,
+verifies activation and registered commands, verifies fallback Problems
+diagnostics, and proves refresh creates neither `.zpkg.lock` nor `zed_modules`.
 
-Run `31238551321` passed the Linux/macOS/Windows unit/repository checks, the
-clean Extension Host job and VSIX packaging. Its lock candidate was subsequently
-committed as `package-lock.json` with lockfile version 3 and exact root tool
-identities `@vscode/test-electron@2.5.2` and `@vscode/vsce@3.9.2`. The one-shot
-write-enabled lock materializer was then removed; permanent CI now uses `npm ci`
-and read-only repository permissions.
+`package-lock.json` is committed with exact root identities
+`@vscode/test-electron@2.5.2` and `@vscode/vsce@3.9.2`; permanent CI uses
+`npm ci`. The one-shot write-enabled lock materializer was removed after the
+lock was committed.
 
-## Independent dedicated-repository sandbox
+## Independent final-head sandbox
 
-The durable sandbox in `zed-pkg-test/zed-pkg-e2e#112` now:
+Draft `zed-pkg-test/zed-pkg-e2e#112` head
+`137488d511e45bea72a933805681bec5d5a6339c` pins exactly:
 
-- checks the five dedicated repositories instead of the old shared blueprints;
-- pins every third-party Action by full commit SHA;
-- uses fixed hosted runner images;
-- disables persisted checkout credentials;
-- uses `npm ci` for the VS Code locked toolchain;
-- runs the clean VS Code Extension Development Host test before VSIX packaging;
-- contains a policy ratchet that rejects mutable Action tags, `*-latest`
-  runners, `npm install`/`npx --yes`, persisted credentials, and product pins
-  that drift from the machine-readable parity matrix.
+- VS Code `c1d3318a2cf8cd717f9b0af67117ddbac3e28d2e`;
+- Qt Creator `8e7958c7c85a305b59accfe82c28e7ff42bfecba`;
+- Xcode `9b9304fee2ff236fc59407ddd97cc2c01225a69d`;
+- Eclipse `246b46048cced1d1072afd3bedc9849efe3a8a8f`;
+- Visual Studio `d85a9c827140426a8d9401b5c269ff36f591a299`.
 
-The current test-org review head is expected to certify these product heads:
+The sandbox pins every third-party Action by full commit SHA, uses fixed runner
+images, disables persisted checkout credentials, uses `npm ci`, runs the VS Code
+clean host, and contains a policy ratchet rejecting mutable Actions/runners/tool
+resolution and candidate/matrix drift.
 
-- VS Code `96c0789a446891d5cb502be799ed121930aee9d1`;
-- Qt Creator `1780ee33eaf8ba3b5fffa8ce3ccc8fb2efea308e`;
-- Xcode `e7e7030fa44496c14de7da684772c4113cfdd92f`;
-- Eclipse `58394c48e704f041bb29be7e9079806e25abd41e`;
-- Visual Studio `4c4141d3ed595fd2b6a331a5a8756f1ed0cde455`.
-
-The previous dedicated-repository sandbox run `31210197200` passed all jobs on
-the earlier exact heads. A fresh exact-head run is required after this
-supply-chain hardening before the new review heads are called certified.
-
-The same evidence is recorded in the Linear `github.com/zed-pkg-test` project
-as **IDE dedicated-repository certification — 2026-08-07**, keeping production
-planning and independent certification ownership explicit.
+Fresh focused run `31239171374` was queued in the shared `zed-pkg-test` runner
+pool at last observation. The earlier dedicated-repository run `31210197200`
+passed all jobs on predecessor heads and is supporting evidence only, not final-
+head certification.
 
 ## Remaining promotion work
 
-The durable promotion backlog is `zed-pkg/.github#28`. Repository creation is
-complete. Remaining work is:
-
-1. complete each remaining editor-native UI shell;
-2. run clean editor-instance GUI tests for Sublime, JetBrains, Qt Creator,
-   Xcode, Eclipse and Visual Studio using vendor-supported test harnesses or
-   experimental instances;
+1. finish Qt Creator, Xcode, Eclipse and Visual Studio vendor-native UI shells;
+2. run clean editor-instance/distribution tests for Sublime and JetBrains and the
+   remaining native editors;
 3. sign and publish VSIX, p2, app/appex, Qt Creator plugin, Package Control and
    Marketplace artifacts;
-4. adopt the final `zed inspect` contract from `zed-cli#191`;
-5. add repositories, PRs, and distribution work to `zed-pkg-project` when the
-   available GitHub integration exposes Projects v2 mutation access.
+4. adopt final `zed inspect` schema from `zed-cli#191`;
+5. add/update delivery items in `zed-pkg-project` when Projects v2 mutation is
+   available through the connected GitHub capability.
 
-Linear issue `DEN-2508` remains In Progress until distribution parity is
-complete.
+Linear `DEN-2508` remains In Progress until distribution parity is complete.
