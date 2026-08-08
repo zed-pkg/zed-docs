@@ -1,6 +1,6 @@
 # IDE integration parity and sandbox certification
 
-Updated: 2026-08-07
+Updated: 2026-08-08
 
 ## Purpose
 
@@ -45,9 +45,10 @@ deterministic fallback, native tests, fixed hosted-runner images, full-SHA
 third-party Actions, unpersisted checkout credentials, and committed dependency
 locks for package-build toolchains where applicable.
 
-The final shared JSON inspection endpoint remains tracked in
-`zed-pkg/zed-cli#191`; IDE integrations must not become independent dependency
-resolvers.
+The shared JSON inspection endpoint is now implemented for review in
+`zed-pkg/zed-cli#235`, tracked by `zed-pkg/zed-cli#191`; IDE integrations must
+not become independent dependency resolvers. Its independent black-box contract
+is `zed-pkg-test/zed-pkg-e2e#119`.
 
 ## Merged foundation evidence
 
@@ -58,23 +59,29 @@ resolvers.
 | Shared parity contract and candidate implementations | `zed-pkg/.github#25` | `051c897578657f8993924f4ecd2a176f4448d404` |
 | Initial independent seven-editor sandbox | `zed-pkg-test/zed-pkg-e2e#105` | `ee7d220807008e9222bbe80e2efbf3c39b21dfc7` |
 
-## Final dedicated-repository review graph
+## Promoted dedicated-repository foundations
 
-| Integration | Pull request | Final exact head | Exact-head green evidence |
-| --- | --- | --- | --- |
-| VS Code | `zed-pkg/zed-vscode#1` | `c1d3318a2cf8cd717f9b0af67117ddbac3e28d2e` | run `31239054128` passed Linux/macOS/Windows tests, locked `npm ci`, clean Extension Development Host, VSIX packaging and artifact upload |
-| Qt Creator | `zed-pkg/zed-qtcreator#1` | `8e7958c7c85a305b59accfe82c28e7ff42bfecba` | run `31239125093` passed fixed Linux/macOS/Windows CMake/CTest CI |
-| Xcode | `zed-pkg/zed-xcode#1` | `9b9304fee2ff236fc59407ddd97cc2c01225a69d` | run `31239129386` passed fixed macOS 15 Swift CI |
-| Eclipse | `zed-pkg/zed-eclipse#1` | `246b46048cced1d1072afd3bedc9849efe3a8a8f` | run `31239136280` passed immutable/fixed-runner Maven/JUnit CI |
-| Visual Studio | `zed-pkg/zed-visual-studio#1` | `d85a9c827140426a8d9401b5c269ff36f591a299` | run `31239141244` passed fixed Windows 2025 .NET CI |
+Each promoted head had repository-local exact-head green CI, no unresolved
+inline review threads, and an independent `zed-pkg-test` sandbox pass against
+the same immutable product SHA before the expected-head guarded merge.
 
-There are no unresolved inline review threads on the five product PRs.
+| Integration | Pull request | Certified exact head | Merge commit | Exact-head green evidence |
+| --- | --- | --- | --- | --- |
+| VS Code | `zed-pkg/zed-vscode#1` | `c1d3318a2cf8cd717f9b0af67117ddbac3e28d2e` | `77cf82d52413b07b7af66328f7e11b4dc3bdd0ba` | run `31239054128` passed Linux/macOS/Windows tests, locked `npm ci`, clean Extension Development Host, VSIX packaging and artifact upload |
+| Qt Creator | `zed-pkg/zed-qtcreator#1` | `8e7958c7c85a305b59accfe82c28e7ff42bfecba` | `0308593bdb0aaf09559fa1442f855202ec0dda75` | run `31239125093` passed fixed Linux/macOS/Windows CMake/CTest CI |
+| Xcode | `zed-pkg/zed-xcode#1` | `9b9304fee2ff236fc59407ddd97cc2c01225a69d` | `a5563588d8bdc63f3b99b133e8316b880597c2b2` | run `31239129386` passed fixed macOS 15 Swift CI |
+| Eclipse | `zed-pkg/zed-eclipse#1` | `246b46048cced1d1072afd3bedc9849efe3a8a8f` | `9bff83bb0922f86535ebad78dc16c6730e9e8b6b` | run `31239136280` passed immutable/fixed-runner Maven/JUnit CI |
+| Visual Studio | `zed-pkg/zed-visual-studio#1` | `d85a9c827140426a8d9401b5c269ff36f591a299` | `533a10364e181e587992b35a824c4e2eb9dfb4ac` | run `31239141244` passed fixed Windows 2025 .NET CI |
+
+These merges promote hardened package-state controller/model foundations and CI;
+they do not claim the remaining vendor-native UI shell or distribution work is
+complete.
 
 ## VS Code clean-host and locked-build gate
 
-The VS Code branch launches a disposable Extension Development Host with a
-disposable user-data directory and fixture workspace, forces an unavailable CLI,
-verifies activation and registered commands, verifies fallback Problems
+The VS Code implementation launches a disposable Extension Development Host with
+a disposable user-data directory and fixture workspace, forces an unavailable
+CLI, verifies activation and registered commands, verifies fallback Problems
 diagnostics, and proves refresh creates neither `.zpkg.lock` nor `zed_modules`.
 
 `package-lock.json` is committed with exact root identities
@@ -90,30 +97,46 @@ packages extension version `0.1.0` for publisher `zed-pkg` under the MIT license
 
 ## Independent final-head sandbox
 
-Draft `zed-pkg-test/zed-pkg-e2e#112` now has head
-`0c55eb576a18ca5946b7ffe5d28b9167a37a3f67` and pins exactly:
+Draft `zed-pkg-test/zed-pkg-e2e#112` has head
+`0c55eb576a18ca5946b7ffe5d28b9167a37a3f67` and pins exactly the five certified
+product heads promoted above.
 
-- VS Code `c1d3318a2cf8cd717f9b0af67117ddbac3e28d2e`;
-- Qt Creator `8e7958c7c85a305b59accfe82c28e7ff42bfecba`;
-- Xcode `9b9304fee2ff236fc59407ddd97cc2c01225a69d`;
-- Eclipse `246b46048cced1d1072afd3bedc9849efe3a8a8f`;
-- Visual Studio `d85a9c827140426a8d9401b5c269ff36f591a299`.
+The focused final-product sandbox run `31239171374` passed those exact five
+product SHAs. The subsequent test-harness change did not repin product code; it
+made the broader fleet audit explicitly review three package namespaces:
+`zed-pkg-test`, legacy `zedtest`, and upstream `zed-pkg`. The upstream namespace
+is required by the two intentional source mirrors `zed-interfaces` and `zed-lib`;
+their manifests are preserved rather than rewritten for the test organization.
 
-The focused final-product sandbox run `31239171374` passed on the immediately
-preceding test head that pins these same five product SHAs. The test harness now
-also explicitly reviews three package namespaces: `zed-pkg-test`, legacy
-`zedtest`, and upstream `zed-pkg`. The upstream namespace is required by the two
-intentional source mirrors `zed-interfaces` and `zed-lib`; their manifests are
-preserved rather than rewritten for the test organization.
-
-A refreshed exact-head IDE sandbox run `31240156191` and organization-inventory
-run `31240156197` are queued/running for the current test head. Final independent
-certification is recorded only after those runs are terminal-successful.
+The current-head organization inventory run `31240156197` is green, including
+all Python contract tests, checked-in core lifecycle coverage, the complete live
+public fleet probe, and all required package-manifest checks. The refreshed
+current-head IDE sandbox run `31240156191` has a green policy job and completed
+green Visual Studio, Qt Creator/Windows, and Sublime/Python 3.14 jobs; remaining
+hosted jobs are still queued, so this document does not call that refreshed run
+terminal-successful yet. The earlier focused run remains the independent
+immutable-product evidence used for the guarded production merges.
 
 The sandbox pins every third-party Action by full commit SHA, uses fixed runner
 images, disables persisted checkout credentials, uses `npm ci`, runs the VS Code
 clean host, and contains a policy ratchet rejecting mutable Actions/runners/tool
 resolution and candidate/matrix drift.
+
+## Shared inspect protocol work
+
+`zed-pkg/zed-cli#235` adds `zed inspect --format json --root <absolute-path>` as
+an early-dispatched read-only command. The implementation is designed to exit
+before normal CLI startup can publish terminal environment state, construct
+credential-aware configuration, contact the registry, or run transaction
+recovery. It reports local manifest/lock/materialization/workspace/adapter/store
+state plus stable diagnostics and confirmation-gated argv/cwd remediation
+metadata under schema `1.0`.
+
+`zed-pkg-test/zed-pkg-e2e#119` independently pins the exact product head and
+builds/runs it on fixed Linux, macOS, and Windows images with an unreachable
+registry, malformed credential state, fake token inputs, and a pending
+transaction sentinel. Promotion of the inspect contract remains gated on both
+product CI and this independent black-box lane.
 
 ## Remaining promotion work
 
@@ -122,7 +145,8 @@ resolution and candidate/matrix drift.
    remaining native editors;
 3. sign and publish VSIX, p2, app/appex, Qt Creator plugin, Package Control and
    Marketplace artifacts;
-4. adopt final `zed inspect` schema from `zed-cli#191`;
+4. merge and adopt the final shared `zed inspect` v1 schema after product and
+   `zed-pkg-test` certification;
 5. add/update delivery items in `zed-pkg-project` when Projects v2 mutation is
    available through the connected GitHub capability.
 
