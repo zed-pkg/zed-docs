@@ -5,6 +5,34 @@ registries are distribution mirrors of one reviewed source commit. It says
 where a target goes. This document says how zed gets it there, and how a
 release candidate is expressed once it arrives.
 
+## Two different things are called "registry"
+
+This document is about **native ecosystem registries**: npm, PyPI, Maven Central,
+Hex, and the rest. Zed mirrors its packages *out* to them and resolves versions
+*from* them.
+
+That is not the same subject as zpkg's own registry protocol — registry
+identity, signed checkpoints, the sparse NDJSON index, private dependencies —
+which is where a package published *as a Zed package* lives. Both are "a
+registry", both have publish and pull paths, and both have credentials, so the
+words collide constantly.
+
+The distinction that resolves it:
+
+| | zpkg registry | native host (this document) |
+| --- | --- | --- |
+| Direction | inbound: where Zed packages live | outbound: where a slice is mirrored to |
+| Identity | immutable `registry_id`, alias-independent | a fixed public host and its protocol |
+| Coordinate | one canonical normalization | per-ecosystem, and they disagree |
+| Credential | `ZPKG_TOKEN_<ALIAS>` | `ZED_<HOST>_TOKEN`, else the ecosystem's own variable |
+
+The third row is the one that bites. A single lowercase-canonicalization rule is
+correct for a zpkg coordinate and wrong for native names: CocoaPods is
+case-sensitive (`Alamofire` resolves, `alamofire` 404s), PyPI folds `.`/`_`/`-`
+per PEP 503, Go escapes uppercase as `!x`, and Maven and Clojars disagree on the
+separator. `NativeRegistry::canonical_package` therefore normalizes per host and
+must not be replaced by a global rule.
+
 ## Registries, not package managers
 
 Zed reaches a native registry over that registry's own HTTP API. It does not
