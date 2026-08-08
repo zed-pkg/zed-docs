@@ -105,10 +105,18 @@ A host with no candidate track — CRAN, opam, LuaRocks, Racket, the PowerShell
 Gallery, Stackage — **rejects** one. Failing the plan by target name is the
 whole point: publishing a candidate as stable is the outcome worth preventing.
 
-`snapshot` is the one mutable channel. Maven `-SNAPSHOT`, Packagist `dev-*`, and
-LuaRocks `dev` are republished at one coordinate by design, so the doc-18
-invariant that rejects same-version/different-content output is relaxed there
-and only there.
+`snapshot` is the one mutable channel, and it is available on **three hosts
+only**: Maven Central, Clojars, and Packagist. Maven serves snapshots from a
+repository built for exactly that, and Packagist re-reads a `dev-*` branch on
+every update, so the doc-18 invariant rejecting same-version/different-content
+output is relaxed there and nowhere else.
+
+Everywhere else a snapshot is refused rather than approximated. npm, crates.io,
+PyPI, RubyGems, NuGet, Hex, pub.dev, and Go's proxy all reject a second upload
+of a version outright — immutability is the property their consumers rely on.
+Handing back a `1.4.0-SNAPSHOT` that one of them accepts exactly once and then
+refuses forever is worse than refusing it up front, because the failure lands
+after the release is already half-run.
 
 ## Commands
 
